@@ -4,11 +4,11 @@
 }
 
 nav {
-  position: fixed; /* This will make the navbar stay at the top of the page */
+  position: fixed;
   top: 0;
-  left: 50%; /* This will move the navbar to the middle of the page horizontally */
-  transform: translateX(-50%); /* This will adjust the position of the navbar to the middle, taking into account its own width */
-  width: 100%; /* This will make the navbar span the full width of the page */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
   font-size: 18px;
   padding: 20px;
 }
