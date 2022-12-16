@@ -3,6 +3,33 @@
   --card-color: rgb(23, 23, 23);
 }
 
+nav {
+  position: fixed; /* This will make the navbar stay at the top of the page */
+  top: 0;
+  left: 50%; /* This will move the navbar to the middle of the page horizontally */
+  transform: translateX(-50%); /* This will adjust the position of the navbar to the middle, taking into account its own width */
+  width: 100%; /* This will make the navbar span the full width of the page */
+  font-size: 18px;
+  padding: 20px;
+}
+nav {
+  background-color: #141414;
+  font-size: 18px;
+  padding: 20px;
+}
+nav a {
+  color: #4c4c4c;
+  text-decoration: none;
+}
+
+nav a:hover {
+  color: white;
+  background-color: grey;
+}
+
+
+
+
 body {
   align-items: center;
   background-color: var(--bg-color);
