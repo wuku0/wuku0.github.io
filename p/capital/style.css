@@ -1,0 +1,25 @@
+/* Default styles for all devices */ body { font-family: Arial, sans-serif; text-align: center; background-color: #f5f5f5; }
+
+#quiz-container { font-size: 20px; max-width: 500px; margin: 0 auto; background-color: #fff; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); padding: 20px; }
+
+h1 { color: #333; margin-top: 0; margin-bottom: 20px; }
+
+#options-container { display: flex; flex-wrap: wrap; justify-content: space-between; margin-bottom: 20px;}
+#options-container p:last-of-type { font-size: 70px;}
+.option { font-size: 20px; width: 45%; height: 40px; margin-bottom: 10px; background-color: #ffc107; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background-color 0.9s ease; }
+
+.selected :hover{ background-color: #ffeb3b; }
+
+.correct { background-color: #8bc34a; }
+
+.wrong { background-color: #ff5252; }
+
+#submit-btn { background-color: #fff; color: #fff; border: none; padding: 10px 20px; margin-bottom: 20px; border-radius: 4px; cursor: progress; }
+
+/* Media query for screens smaller than or equal to the width of an iPhone X (375px) */ @media screen and (max-width:375px) {
+
+/* Change the options container to one column / #options-container { flex-direction: column; / Stack the items vertically */ }
+
+/* Make each option take up the full width */ .option { width:100%; }
+
+@media screen and (max-width:10000px) { /* Change the options container to one column */ #options-container { flex-direction: column; /* Stack the items vertically */ } /* Make each option take up the full width */ .option { width:100%; } }

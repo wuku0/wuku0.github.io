@@ -1,0 +1,100 @@
+<html>
+  <head>
+    <title>Kahoot cheat</title>
+    <meta name="description" content="Easy to understand kahoot cheat">
+    <style>
+#output {
+  background-color: #1f1f1f;
+  padding: 15px;
+  margin: 30px auto;
+  width: 500px;
+  text-align: center;
+  border: 2px solid #f0f0f0;
+  border-radius: 10px;
+}
+body {
+  background-color: #1f1f1f;
+  color: #f0f0f0;
+  text-align: center;
+  font-family: Arial, sans-serif;
+}
+#uuidInput {
+  background: transparent;
+  border: 2px solid #f0f0f0;
+  color: #f0f0f0;
+  margin: 15px;
+  padding: 10px;
+  width: 300px;
+}
+#submitButton {
+  background-color: #f0f0f0;
+  color: #1f1f1f;
+  border: none;
+  padding: 15px 30px;
+  margin: 15px;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+}
+#submitButton:hover {
+  background-color: #e6e6e6;
+}
+#clearButton {
+  background-color: #f0f0f0;
+  color: #1f1f1f;
+  border: none;
+  padding: 15px 30px;
+  margin: 15px;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+}
+#clearButton:hover {
+  background-color: #e6e6e6;
+}
+    </style>
+  </head>
+  <body>
+    <div style="text-align:center;">
+      <label for="uuidInput">Enter UUID:</label>
+      <input type="text" id="uuidInput" name="uuid">
+    </div>
+    <div style="text-align:center;">
+      <button id="submitButton">Submit</button>
+      <button id="clearButton">Clear</button>
+    </div>
+    <div id="output"></div>
+    <script>
+      const colorList = ["red", "blue", "yellow", "green"];
+     
+     document.getElementById("submitButton").addEventListener("click", function() {
+       const uuid = document.getElementById("uuidInput").value;
+       const url = `https://abstract.land/api/kahoot/private/${uuid}`;
+       
+       fetch(url)
+         .then(response => response.json())
+         .then(data => {
+           const questions = data.questions;
+           document.getElementById("output").innerHTML = `Title: ${data.title} <br><br>`;
+           for (let i = 0; i < questions.length; i++) {
+             for (let j = 0; j < questions[i].choices.length; j++) {
+               if (questions[i].choices[j].correct) {
+                 document.getElementById("output").innerHTML += `${i + 1}: ${questions[i].choices[j].answer}<br>`;
+                 document.getElementById("output").innerHTML += `<span style="color: ${colorList[j]}">${colorList[j]}</span><br><br>`;
+}
+}
+}
+})
+.catch(error => {
+document.getElementById("output").innerHTML = "Error: Invalid or non-existent Kahoot ID. Please enter a valid ID.";
+});
+});
+// by wuku#4042 on wuku.one
+  
+  document.getElementById("clearButton").addEventListener("click", function() {
+    document.getElementById("uuidInput").value = "";
+    document.getElementById("output").innerHTML = "";
+  });
+</script>
+</body>
+</html>

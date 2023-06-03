@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Corrupt Uploaded File</title>
+  <meta name="description" content="Easily corrupt any file that the user can upload, corrupt a file">
+  <link rel="apple-touch-icon" sizes="180x180" href="images/corruptico/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="images/corruptico/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="images/corruptico/favicon-16x16.png">
+  <link rel="manifest" href="images/corruptico/site.webmanifest">
+</head>
+<body>
+<div class="container">
+  <h1>Upload and Corrupt File</h1>
+  <input type="file" id="fileInput">
+  <button onclick="corruptFile()">Corrupt File</button>
+  
+  <script>
+function corruptFile() {
+const fileInput = document.getElementById("fileInput");
+const file = fileInput.files[0];
+const reader = new FileReader();
+reader.onload = function(event) {
+ const data = new Uint8Array(event.target.result);
+ for (let i = 0; i < data.length; i++) {
+ data[i] = 0xff + Math.floor(Math.random() * 256);
+ }
+ const blob = new Blob([data], {type: file.type});
+ const downloadLink = document.createElement("a");
+ downloadLink.href = URL.createObjectURL(blob);
+ downloadLink.download = "corrupted_" + file.name;
+ downloadLink.click();
+};
+reader.readAsArrayBuffer(file);
+fileInput.value = "";
+}
+  </script>
+
+</body>
+
+<style>
+     body {
+      font-family: Arial, sans-serif;
+      background-color: #f2f2f2;
+      color: #333;
+    }
+    h1 {
+      font-size: 72px;
+      font-weight: bold;
+      margin: 100px 0 60px;
+      text-align: center;
+    }
+    input[type="file"] {
+      display: block;
+      margin: 0 auto 60px;
+      padding: 20px;
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      background-color: #fff;
+      color: #333;
+    }
+    button {
+      display: block;
+      margin: 0 auto;
+      padding: 20px 40px;
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      background-color: #2196f3;
+      color: #fff;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    button:hover {
+      background-color: #1976d2;
+    }
+
+  </style>
+</html>
