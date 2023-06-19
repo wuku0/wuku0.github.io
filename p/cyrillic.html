@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Serbian Cyrillic Alphabet Game</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f7f7;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      background-color: rgba(255, 255, 255, 0.9);
+    }
+
+    h1 {
+      text-align: center;
+      margin-top: 0;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    #letter-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 200px;
+      font-size: 72px;
+      border-radius: 5px;
+      background-color: rgba(255, 255, 255, 0.8);
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+
+    #answer-input {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 20px;
+    }
+
+    #answer-input input[type="text"] {
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    #answer-input button {
+      padding: 10px 20px;
+      border-radius: 5px;
+      border: none;
+      background-color: #4caf50;
+      color: #fff;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    #answer-input button:hover {
+      background-color: #45a049;
+    }
+
+    #result {
+      margin-top: 20px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    #history-container {
+      margin-top: 20px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    #history-container h3 {
+      margin-top: 0;
+    }
+
+    #history-list li {
+      margin-bottom: 5px;
+      list-style: none;
+    }
+
+    .toggle-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 20px;
+    }
+
+    .toggle-container label {
+      margin-right: 10px;
+    }
+
+    .button-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 20px;
+    }
+
+    .button-container button {
+      margin-right: 10px;
+      padding: 10px 20px;
+      border-radius: 5px;
+      border: none;
+      background-color: #2196f3;
+      color: #fff;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .button-container button:hover {
+      background-color: #0b7dda;
+    }
+
+    /* Dark mode styles */
+    body.dark-mode {
+      background-color: #333;
+      color: #f7f7f7;
+    }
+
+    body.dark-mode .container {
+      background-color: rgba(0, 0, 0, 0.9);
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    }
+
+    body.dark-mode h1 {
+      text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.2);
+    }
+
+    body.dark-mode #letter-container {
+      background-color: rgba(0, 0, 0, 0.8);
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    }
+
+    body.dark-mode #answer-input input[type="text"] {
+      border: 1px solid #888;
+      background-color: #555;
+      color: #f7f7f7;
+    }
+
+    body.dark-mode #answer-input button {
+      background-color: #1e88e5;
+    }
+
+    body.dark-mode #result {
+      color: #f7f7f7;
+    }
+
+    body.dark-mode #history-container {
+      background-color: rgba(0, 0, 0, 0.8);
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    }
+
+    body.dark-mode .button-container button {
+      background-color: #0d47a1;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Serbian Cyrillic Alphabet Game</h1>
+    <div id="letter-container"></div>
+    <div id="answer-input">
+      <input type="text" id="answer" placeholder="Enter your answer">
+      <button onclick="checkAnswer()">Check</button>
+    </div>
+    <div id="result"></div>
+    <div class="toggle-container">
+      <label for="toggle">Toggle Display:</label>
+      <input type="checkbox" id="toggle" onchange="toggleDisplay()">
+    </div>
+    <div class="button-container">
+      <button onclick="shuffleLetters()">Shuffle</button>
+      <button onclick="resetGame()">Reset</button>
+    </div>
+    <div id="history-container">
+      <h3>Question History:</h3>
+      <ul id="history-list"></ul>
+    </div>
+  </div>
+
+  <script>
+    var letters = [
+      { cyrillic: 'А', latin: 'A' },
+      { cyrillic: 'Б', latin: 'B' },
+      { cyrillic: 'В', latin: 'V' },
+      { cyrillic: 'Г', latin: 'G' },
+      { cyrillic: 'Д', latin: 'D' },
+      { cyrillic: 'Ђ', latin: 'Đ' },
+      { cyrillic: 'Е', latin: 'E' },
+      { cyrillic: 'Ж', latin: 'Ž' },
+      { cyrillic: 'З', latin: 'Z' },
+      { cyrillic: 'И', latin: 'I' },
+      { cyrillic: 'Ј', latin: 'J' },
+      { cyrillic: 'К', latin: 'K' },
+      { cyrillic: 'Л', latin: 'L' },
+      { cyrillic: 'Љ', latin: 'Lj' },
+      { cyrillic: 'М', latin: 'M' },
+      { cyrillic: 'Н', latin: 'N' },
+      { cyrillic: 'Њ', latin: 'Nj' },
+      { cyrillic: 'О', latin: 'O' },
+      { cyrillic: 'П', latin: 'P' },
+      { cyrillic: 'Р', latin: 'R' },
+      { cyrillic: 'С', latin: 'S' },
+      { cyrillic: 'Т', latin: 'T' },
+      { cyrillic: 'Ћ', latin: 'Ć' },
+      { cyrillic: 'У', latin: 'U' },
+      { cyrillic: 'Ф', latin: 'F' },
+      { cyrillic: 'Х', latin: 'H' },
+      { cyrillic: 'Ц', latin: 'C' },
+      { cyrillic: 'Ч', latin: 'Č' },
+      { cyrillic: 'Џ', latin: 'Dž' },
+      { cyrillic: 'Ш', latin: 'Š' },
+    ];
+
+    var letterContainer = document.getElementById('letter-container');
+    var answerInput = document.getElementById('answer');
+    var resultContainer = document.getElementById('result');
+    var toggleDisplayCheckbox = document.getElementById('toggle');
+    var historyList = document.getElementById('history-list');
+    var displayCyrillic = true;
+    var currentIndex = 0;
+
+    function displayLetter() {
+      var letter = letters[currentIndex];
+      letterContainer.textContent = displayCyrillic ? letter.cyrillic : letter.latin;
+      answerInput.value = '';
+      resultContainer.textContent = '';
+    }
+
+    function checkAnswer() {
+      var letter = letters[currentIndex];
+      var answer = answerInput.value.trim();
+
+      var listItem = document.createElement('li');
+      listItem.textContent = `Question: ${displayCyrillic ? letter.cyrillic : letter.latin} | Your Answer: ${answer} | Correct Answer: ${displayCyrillic ? letter.latin : letter.cyrillic}`;
+      historyList.appendChild(listItem);
+
+      if ((displayCyrillic && answer.toUpperCase() === letter.latin.toUpperCase()) ||
+          (!displayCyrillic && answer.toUpperCase() === letter.cyrillic.toUpperCase())) {
+        resultContainer.textContent = 'Correct!';
+      } else {
+        resultContainer.textContent = 'Wrong! The correct answer is: ' + (displayCyrillic ? letter.latin : letter.cyrillic);
+      }
+
+      currentIndex++;
+      if (currentIndex >= letters.length) {
+        currentIndex = 0;
+      }
+
+      setTimeout(displayLetter, 2000);
+    }
+
+    function toggleDisplay() {
+      displayCyrillic = !toggleDisplayCheckbox.checked;
+      displayLetter();
+    }
+
+    function shuffleLetters() {
+      for (let i = letters.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [letters[i], letters[j]] = [letters[j], letters[i]];
+      }
+
+      currentIndex = 0;
+      displayLetter();
+    }
+
+    function resetGame() {
+      currentIndex = 0;
+      historyList.innerHTML = '';
+      displayLetter();
+    }
+
+    displayLetter();
+  </script>
+</body>
+</html>
