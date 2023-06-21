@@ -1,12 +1,12 @@
-
-
 #wuku {
     font-size: 36px;
     font-weight: bold;
     text-align: center;
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
     position: center;
-    color: white
+    color: white;
+    transition: opacity 0.5s ease-in-out; /* Smooth transition for opacity */
+
 }
 
 
@@ -193,4 +193,183 @@
   .box p {
     font-size: 16px;
     line-height: 1.5;
+  }
+
+
+
+
+
+
+
+
+
+  .navbar {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    width: 20%;
+    visibility: visible;
+    transition: visibility 2.5s ease, background-color 0.5s ease-in-out; /* Added background-color transition */
+    border-radius: 10px;
+    margin: 0 auto;
+    text-align: center;
+    transform: translateX(-50%) scale(1);
+    background-color: transparent; /* Initial background color */
+  }
+
+  .navbar.active {
+    background-color: #333;
+    transform: translateX(-50%) scale(1.5);
+  }
+
+  .navbar a {
+    display: inline-block;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+  }
+
+  .navbar a:hover {
+    background-color: #ddd;
+    color: black;
+  }
+
+  body {
+    background: linear-gradient(135deg, #151515 25%, transparent 25%) -50px 0,
+      linear-gradient(225deg, #151515 25%, transparent 25%) -50px 0,
+      linear-gradient(315deg, #151515 25%, transparent 25%),
+      linear-gradient(45deg, #151515 25%, transparent 25%);
+    background-size: 100px 100px;
+    background-color: #141414;
+  }
+
+  @media only screen and (max-width: 2000px) and (pointer: coarse) {
+    /* CSS rules for smartphones with touch input */
+  }
+
+  .btn {
+    border-radius: 10px;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    font-size: 20px;
+    margin: 10px;
+    padding: 15px;
+    text-decoration: none;
+    color: white;
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+
+  .btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 10px white;
+  }
+
+  .container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .h1 {
+    color: white;
+  }
+
+  .h2 {
+    color: white;
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+  }
+
+  .fa-flip {
+    animation: flip 1s;
+  }
+
+  @keyframes flip {
+    from {
+      transform: rotateY(0deg);
+    }
+    to {
+      transform: rotateY(180deg);
+    }
+  }
+
+  .fa-shake {
+    animation: shake 0.5s;
+  }
+
+  @keyframes shake {
+    from {
+      transform: translateX(-5px);
+    }
+    to {
+      transform: translateX(5px);
+    }
+  }
+
+  .controls button {
+    border-radius: 10px;
+    font-size: 20px;
+    padding: 20px;
+    margin: 20px;
+    background-color: #eee;
+    border: none;
+    box-shadow: inset 0 -3px #ccc;
+  }
+
+  .controls button:hover {
+    background-color: #ddd;
+  }
+
+  .controls button:active {
+    box-shadow: inset 0 -1px #ccc;
+  }
+
+  .controls button i {
+    color: #333;
+  }
+
+  .footer {
+    color: white;
+    font-size: 16px;
+    padding: 20px;
+  }
+
+  .projects {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    margin: 20px;
+    max-width: 960px;
+  }
+
+  .box {
+    width: 280px;
+    height: 250px;
+    border-radius: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin: 10px;
+    padding: 20px;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    color: white;
+    opacity: 0; /* Initially hidden */
+    transition: opacity 0.5s ease-in-out; /* Smooth transition for opacity */
+  }
+
+  .box:hover {
+    transform: scale(1.05);
+    transition: all 0.3s ease-in-out;
+  }
+
+  .box h2 {
+    font-size: 24px;
+    margin-bottom: 10px;
+  }
+
+  .box img {
+    width: 75px;
+    height: 75px;
+    object-fit: cover;
+    border-radius: 20px;
+    margin-right: 20px;
   }
