@@ -6,7 +6,7 @@ https://wuku.one [wuku, ]
 
 
 
-
+https://piped.video [yt, youtube]
 https://cdn.discordapp.com/attachments/802838708830470144/1120643095197917295/steamUIFixxr.bat [steam, steam fix, steam ui]
 https://cdn.discordapp.com/attachments/802838708830470144/1121126422715580426/steam_portable.bat [steam, steam portable, steam installer]
 https://steamcommunity.com/ [games, steam, gaming]
