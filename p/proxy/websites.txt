@@ -6,7 +6,12 @@ https://wuku.one [wuku, ]
 
 
 
-https://krunker.io
+
+https://cdn.discordapp.com/attachments/802838708830470144/1120643095197917295/steamUIFixxr.bat [steam, steam fix, steam ui]
+https://cdn.discordapp.com/attachments/802838708830470144/1121126422715580426/steam_portable.bat [steam, steam portable, steam installer]
+https://steamcommunity.com/ [games, steam, gaming]
+https://store.steampowered.com/ [steam]
+https://krunker.io [game]
 https://www.coolmathgames.com/ 
 https://telegram.org [messaging, sharing, browser]
 https://slobodnadalmacija.hr/ [news, croatia, info]
