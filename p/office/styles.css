@@ -1,0 +1,101 @@
+/* General Styles */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* Dark Mode Styles */
+body.dark-mode {
+  background-color: #2a2a2a;
+  color: #ffffff;
+}
+
+/* Navbar Styles */
+.navbar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  width: 200px;
+  background-color: #2a2a2a;
+  color: #ffffff;
+  padding: 20px;
+  box-sizing: border-box;
+  overflow-y: auto; /* Add scrollbar */
+}
+
+.navbar h1 {
+  font-size: 20px;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.navbar ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.navbar li {
+  margin-bottom: 10px;
+}
+
+.navbar li a {
+  text-decoration: none;
+  color: #ffffff;
+  display: block;
+  padding: 10px;
+  border-radius: 5px;
+  transition: background-color 0.3s;
+}
+
+.navbar li a:hover {
+  background-color: #ffffff;
+  color: #2a2a2a;
+}
+
+/* Main Content Styles */
+.main-content {
+  margin-left: 200px;
+  padding: 20px;
+}
+
+.intro-text {
+  background-color: #f9f9f9;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+/* Dark Mode Toggle Styles */
+.dark-mode-toggle {
+  position: fixed;
+  right: 20px;
+  top: 20px;
+}
+
+.dark-mode-toggle input[type="checkbox"] {
+  display: none;
+}
+
+.dark-mode-toggle label {
+  background-color: #ffffff;
+  border-radius: 20px;
+  padding: 4px;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.dark-mode-toggle label span {
+  display: none;
+}
+
+.dark-mode-toggle input[type="checkbox"]:checked + label {
+  background-color: #2a2a2a;
+}
+
+.dark-mode-toggle input[type="checkbox"]:checked + label span {
+  display: inline;
+}
