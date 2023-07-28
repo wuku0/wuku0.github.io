@@ -2,7 +2,7 @@ https://www.example.com
 https://www.example.org
 https://www.example.net
 https://play-cs.com [counter, strike, cs, cs 1.6, csgo, 1.6]
-https://wuku.one [wuku, ]
+https://roko.cc [wuku, roko,]
 
 
 
