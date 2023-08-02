@@ -2,7 +2,7 @@ function formatTime(time) {
   return time.toLocaleString(undefined, {
     hour: 'numeric',
     minute: 'numeric',
-    hour12: false,
+    hour12: true,
   });
 }
 function displayTime() {
