@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Comment Remover</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            background-color: #333;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background-color: #1a1a1a;
+            border-radius: 8px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            font-size: 28px;
+            color: #fff;
+            margin-bottom: 20px;
+        }
+
+        .code-wrapper {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 200px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 10px;
+            font-size: 16px;
+            resize: vertical;
+            color: #eee;
+            background-color: #1a1a1a;
+        }
+
+        .result {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background-color: #222;
+            padding: 10px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            font-size: 16px;
+            color: #eee;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .button {
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 10px;
+        }
+
+        .button:hover {
+            background-color: #45a049;
+        }
+
+        .copy-feedback {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            font-size: 14px;
+            color: #4CAF50;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .code-wrapper:hover .copy-feedback {
+            opacity: 1;
+        }
+
+        .code-wrapper:hover .copy-feedback::before {
+            content: 'Copied!';
+            position: absolute;
+            right: 100%;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">Comment Remover</div>
+        <label for="code" style="color: #eee;">Select language:</label>
+        <select id="language" style="color: #111; background-color: #f1f1f1;">
+            <option value="javascript">JavaScript</option>
+            <option value="java">Java</option>
+            <option value="c">C</option>
+            <option value="html">HTML</option>
+            <option value="python">Python</option>
+            <option value="cpp">C++</option>
+            <option value="php">PHP</option>
+            <option value="csharp">C#</option>
+            <option value="r">R</option>
+            <option value="typescript">TypeScript</option>
+            <option value="swift">Swift</option>
+            <option value="objective-c">Objective-C</option>
+            <option value="ruby">Ruby</option>
+            <option value="perl">Perl</option>
+            <option value="go">Go</option>
+            <option value="scala">Scala</option>
+            <option value="rust">Rust</option>
+            <option value="kotlin">Kotlin</option>
+            <option value="dart">Dart</option>
+            <option value="lua">Lua</option>
+            <option value="haskell">Haskell</option>
+            <option value="bash">Bash</option>
+            <option value="powershell">PowerShell</option>
+            <option value="sql">SQL</option>
+            <option value="elixir">Elixir</option>
+            <option value="erlang">Erlang</option>
+            <option value="vbnet">VB.NET</option>
+            <option value="matlab">MATLAB</option>
+            <option value="clojure">Clojure</option>
+            <option value="groovy">Groovy</option>
+            <option value="cobol">COBOL</option>
+            <option value="fortran">Fortran</option>
+            <option value="perl6">Perl 6</option>
+            <option value="pascal">Pascal</option>
+            <option value="swift">Swift</option>
+            <option value="vba">VBA</option>
+            <option value="scala">Scala</option>
+            <option value="scheme">Scheme</option>
+            <option value="tcl">Tcl</option>
+            <option value="verilog">Verilog</option>
+            <option value="vhdl">VHDL</option>
+            <option value="hack">Hack</option>
+            <option value="awk">Awk</option>
+            <option value="abap">ABAP</option>
+            <option value="apacheconf">ApacheConf</option>
+            <option value="apl">APL</option>
+            <option value="autohotkey">AutoHotkey</option>
+            <option value="clojure">Clojure</option>
+            <option value="cobol">COBOL</option>
+            <option value="coffeescript">CoffeeScript</option>
+            <option value="crystal">Crystal</option>
+            <option value="cuda">CUDA</option>
+        </select><br>
+        <div class="code-wrapper">
+            <textarea id="code" placeholder="Paste your code here..."></textarea>
+            <div class="copy-feedback"></div>
+        </div>
+        <div class="button-container">
+            <button class="button" onclick="autoDetectLanguage()">Auto Detect Language</button>
+            <button class="button" onclick="removeComments()">Remove Comments</button>
+        </div>
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        function autoDetectLanguage() {
+            const codeInput = document.getElementById('code');
+            const resultOutput = document.getElementById('result');
+
+            // Get the code from the textarea
+            const code = codeInput.value.trim();
+
+            // Regular expressions to match comments for various programming languages
+            const commentPatterns = {
+                'javascript': /\/\/.*|\/\*[^]*?\*\//g,
+                'java': /\/\/.*|\/\*[^]*?\*\//g,
+                'c': /\/\*[^]*?\*\//g,
+                'html': /<!--.*?-->/g,
+                'python': /#.*/g,
+                'cpp': /\/\/.*|\/\*[^]*?\*\//g,
+                'php': /\/\/.*|\/\*[^]*?\*\//g,
+                'csharp': /\/\/.*|\/\*[^]*?\*\//g,
+                'r': /#.*|\/\*[^]*?\*\//g,
+                'typescript': /\/\/.*|\/\*[^]*?\*\//g,
+                'swift': /\/\/.*|\/\*[^]*?\*\//g,
+                'objective-c': /\/\/.*|\/\*[^]*?\*\//g,
+                'ruby': /#.*|=begin[^]*?=end/g,
+                'perl': /#.*|\/\*[^]*?\*\//g,
+                'go': /\/\/.*|\/\*[^]*?\*\//g,
+                'scala': /\/\/.*|\/\*[^]*?\*\//g,
+                'rust': /\/\/.*|\/\*[^]*?\*\//g,
+                'kotlin': /\/\/.*|\/\*[^]*?\*\//g,
+                'dart': /\/\/.*|\/\*[^]*?\*\//g,
+                'lua': /--.*|\/\*[^]*?\*\//g,
+                'haskell': /--.*|\/\*[^]*?\*\//g,
+                'bash': /#.*/g,
+                'powershell': /#.*/g,
+                'sql': /--.*|\/\*[^]*?\*\//g,
+                'elixir': /#.*|\/\*[^]*?\*\//g,
+                'erlang': /%.*|\/\*[^]*?\*\//g,
+                'vbnet': /'.*/g,
+                'matlab': /%.*|\/\*[^]*?\*\//g,
+                'clojure': /;.*/g,
+                'groovy': /\/\/.*|\/\*[^]*?\*\//g,
+                'cobol': /.*\*\$/g,
+                'fortran': /!.*|\/\*[^]*?\*\//g,
+                'perl6': /#.*|\/\*[^]*?\*\//g,
+                'pascal': /\(\*.*?\*\)|\/\/.*|{.*?}/g,
+                'vba': /'.*/g,
+                'scala': /\/\/.*|\/\*[^]*?\*\//g,
+                'scheme': /;.*|\/\*[^]*?\*\//g,
+                'tcl': /#.*|\/\*[^]*?\*\//g,
+                'verilog': /\/\/.*|\/\*[^]*?\*\//g,
+                'vhdl': /--.*|\/\*[^]*?\*\//g,
+                'hack': /\/\/.*|\/\*[^]*?\*\//g,
+                'awk': /#.*|\/\*[^]*?\*\//g,
+                'abap': /'.*|\/\*[^]*?\*\//g,
+                'apacheconf': /#.*|<\/\*[^]*?\*\//g,
+                'apl': /⍝.*/g,
+                'autohotkey': /;.*/g,
+                'clojure': /;.*/g,
+                'cobol': /.*\*\$/g,
+                'coffeescript': /#.*|###[^]*?###/g,
+                'crystal': /#.*|\/\*[^]*?\*\//g,
+                'cuda': /\/\/.*|\/\*[^]*?\*\//g,
+                // Add more comment patterns for other supported languages as needed
+            };
+
+            // Find the language based on the comment patterns
+            let detectedLanguage = 'plaintext';
+            for (const language in commentPatterns) {
+                if (code.match(commentPatterns[language])) {
+                    detectedLanguage = language;
+                    break;
+                }
+            }
+
+            // Set the detected language in the dropdown
+            const languageDropdown = document.getElementById('language');
+            languageDropdown.value = detectedLanguage;
+
+            // Remove comments based on the detected language
+            removeComments();
+        }
+
+        function removeComments() {
+            const codeInput = document.getElementById('code');
+            const resultOutput = document.getElementById('result');
+            const language = document.getElementById('language').value;
+
+            // Get the code from the textarea
+            const code = codeInput.value;
+
+            // Regular expressions to match comments for various programming languages
+            const commentPatterns = {
+                'javascript': /\/\/.*|\/\*[^]*?\*\//g,
+                'java': /\/\/.*|\/\*[^]*?\*\//g,
+                'c': /\/\*[^]*?\*\//g,
+                'html': /<!--.*?-->/g,
+                'python': /#.*/g,
+                'cpp': /\/\/.*|\/\*[^]*?\*\//g,
+                'php': /\/\/.*|\/\*[^]*?\*\//g,
+                'csharp': /\/\/.*|\/\*[^]*?\*\//g,
+                'r': /#.*|\/\*[^]*?\*\//g,
+                'typescript': /\/\/.*|\/\*[^]*?\*\//g,
+                'swift': /\/\/.*|\/\*[^]*?\*\//g,
+                'objective-c': /\/\/.*|\/\*[^]*?\*\//g,
+                'ruby': /#.*|=begin[^]*?=end/g,
+                'perl': /#.*|\/\*[^]*?\*\//g,
+                'go': /\/\/.*|\/\*[^]*?\*\//g,
+                'scala': /\/\/.*|\/\*[^]*?\*\//g,
+                'rust': /\/\/.*|\/\*[^]*?\*\//g,
+                'kotlin': /\/\/.*|\/\*[^]*?\*\//g,
+                'dart': /\/\/.*|\/\*[^]*?\*\//g,
+                'lua': /--.*|\/\*[^]*?\*\//g,
+                'haskell': /--.*|\/\*[^]*?\*\//g,
+                'bash': /#.*/g,
+                'powershell': /#.*/g,
+                'sql': /--.*|\/\*[^]*?\*\//g,
+                'elixir': /#.*|\/\*[^]*?\*\//g,
+                'erlang': /%.*|\/\*[^]*?\*\//g,
+                'vbnet': /'.*/g,
+                'matlab': /%.*|\/\*[^]*?\*\//g,
+                'clojure': /;.*/g,
+                'groovy': /\/\/.*|\/\*[^]*?\*\//g,
+                'cobol': /.*\*\$/g,
+                'fortran': /!.*|\/\*[^]*?\*\//g,
+                'perl6': /#.*|\/\*[^]*?\*\//g,
+                'pascal': /\(\*.*?\*\)|\/\/.*|{.*?}/g,
+                'vba': /'.*/g,
+                'scala': /\/\/.*|\/\*[^]*?\*\//g,
+                'scheme': /;.*|\/\*[^]*?\*\//g,
+                'tcl': /#.*|\/\*[^]*?\*\//g,
+                'verilog': /\/\/.*|\/\*[^]*?\*\//g,
+                'vhdl': /--.*|\/\*[^]*?\*\//g,
+                'hack': /\/\/.*|\/\*[^]*?\*\//g,
+                'awk': /#.*|\/\*[^]*?\*\//g,
+                'abap': /'.*|\/\*[^]*?\*\//g,
+                'apacheconf': /#.*|<\/\*[^]*?\*\//g,
+                'apl': /⍝.*/g,
+                'autohotkey': /;.*/g,
+                'clojure': /;.*/g,
+                'cobol': /.*\*\$/g,
+                'coffeescript': /#.*|###[^]*?###/g,
+                'crystal': /#.*|\/\*[^]*?\*\//g,
+                'cuda': /\/\/.*|\/\*[^]*?\*\//g,
+                // Add more comment patterns for other supported languages as needed
+            };
+
+            const pattern = commentPatterns[language] || /(?:)/; // Fallback to empty pattern for unsupported languages
+            const result = code.replace(pattern, '');
+
+            // Set the result to the output box
+            resultOutput.textContent = result;
+
+            // Copy the result to the clipboard
+            copyToClipboard(result);
+        }
+
+        function copyToClipboard(text) {
+            const tempInput = document.createElement('textarea');
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+
+            const copyFeedback = document.querySelector('.copy-feedback');
+            copyFeedback.textContent = 'Copied!';
+            setTimeout(() => {
+                copyFeedback.textContent = '';
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
