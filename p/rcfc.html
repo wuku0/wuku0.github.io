@@ -165,7 +165,7 @@
             <div class="copy-feedback"></div>
         </div>
         <div class="button-container">
-            <button class="button" onclick="autoDetectLanguage()">Auto Detect Language</button>
+            <button class="button" onclick="autoDetectLanguage()">Auto Detect Language</button><br><br>
             <button class="button" onclick="removeComments()">Remove Comments</button>
         </div>
         <div class="result" id="result"></div>
@@ -176,10 +176,8 @@
             const codeInput = document.getElementById('code');
             const resultOutput = document.getElementById('result');
 
-            // Get the code from the textarea
             const code = codeInput.value.trim();
 
-            // Regular expressions to match comments for various programming languages
             const commentPatterns = {
                 'javascript': /\/\/.*|\/\*[^]*?\*\//g,
                 'java': /\/\/.*|\/\*[^]*?\*\//g,
@@ -232,10 +230,8 @@
                 'coffeescript': /#.*|###[^]*?###/g,
                 'crystal': /#.*|\/\*[^]*?\*\//g,
                 'cuda': /\/\/.*|\/\*[^]*?\*\//g,
-                // Add more comment patterns for other supported languages as needed
             };
 
-            // Find the language based on the comment patterns
             let detectedLanguage = 'plaintext';
             for (const language in commentPatterns) {
                 if (code.match(commentPatterns[language])) {
@@ -244,11 +240,9 @@
                 }
             }
 
-            // Set the detected language in the dropdown
             const languageDropdown = document.getElementById('language');
             languageDropdown.value = detectedLanguage;
 
-            // Remove comments based on the detected language
             removeComments();
         }
 
@@ -257,10 +251,8 @@
             const resultOutput = document.getElementById('result');
             const language = document.getElementById('language').value;
 
-            // Get the code from the textarea
             const code = codeInput.value;
 
-            // Regular expressions to match comments for various programming languages
             const commentPatterns = {
                 'javascript': /\/\/.*|\/\*[^]*?\*\//g,
                 'java': /\/\/.*|\/\*[^]*?\*\//g,
@@ -313,16 +305,13 @@
                 'coffeescript': /#.*|###[^]*?###/g,
                 'crystal': /#.*|\/\*[^]*?\*\//g,
                 'cuda': /\/\/.*|\/\*[^]*?\*\//g,
-                // Add more comment patterns for other supported languages as needed
             };
 
-            const pattern = commentPatterns[language] || /(?:)/; // Fallback to empty pattern for unsupported languages
+            const pattern = commentPatterns[language] || /(?:)/; 
             const result = code.replace(pattern, '');
 
-            // Set the result to the output box
             resultOutput.textContent = result;
 
-            // Copy the result to the clipboard
             copyToClipboard(result);
         }
 
