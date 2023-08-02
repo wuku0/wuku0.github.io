@@ -1,3 +1,22 @@
+function formatTime(time) {
+  return time.toLocaleString(undefined, {
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: false,
+  });
+}
+function displayTime() {
+  const zagrebTime = new Date().toLocaleString('en-US', {
+    timeZone: 'Europe/Zagreb',
+  });
+  document.getElementById('zagrebTime').textContent = formatTime(new Date(zagrebTime));
+  const visitorTime = new Date();
+  document.getElementById('visitorTime').textContent = formatTime(visitorTime);
+}
+displayTime();
+setInterval(displayTime, 1000);
+
+
 function showQuote() {
   const quoteElement = document.getElementById("quote");
   quoteElement.style.display = "block";

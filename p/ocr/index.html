@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>OCR</title>
+  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+  <script src="https://kit.fontawesome.com/f36591d8ab.js" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.19.2/docxtemplater.js"></script>
+</head>
+<body>
+    <div class="container">
+      <div class="left-box">
+
+        <label for="fileInput" class="upload-button">
+            <i class="fa-solid fa-camera"></i>
+          Take a Picture
+        </label>
+        <input type="file" id="fileInput" accept="image/*" capture="camera">
+        <hr><hr>
+        <img id="previewImage" alt="Preview Image" class="preview-image">
+        <pre id="consoleLog" class="console-log"></pre>
+        <hr><hr>
+        <button class="upload-button" id="exportPdf">Export to PDF</button>
+        <button class="upload-button" id="exportDoc">Export to Docx</button>
+        <button class="upload-button" id="exportTxt">Export to TXT</button>
+        <button class="upload-button" id="exportCsv">Export to CSV</button>
+      </div>
+      <div class="right-box">
+        <button id="copyButton"><i class="fa fa-clipboard"></i></button>
+        <pre id="ocrOutput" class="ocr-output"></pre>
+      </div>
+    </div>
+  <script src="tesseract.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
