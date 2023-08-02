@@ -45,10 +45,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         ocrOutput.textContent = '';
         consoleLog.textContent = '';
-
+//'eng+rus+chi_sim+chi_tra+jpn+kor+deu+fra+spa+ita+por+nld+dan+fin+nor+swe+ell+tur+ara+heb+hin+ben+tha+vie+ind+msa+fil+hun+ces+pol+ukr+slk+slv+ron+bul+hrv+srp+mkd+est+lav+lit+aze+kat+mal+tel+tam+kan+pan+guj+ori+sin+mya+khm+lao', 
         Tesseract.recognize(
           imageUrl,
-          'eng', 
+          'eng+rus+deu+spa+ita+hrv+srp+ukr', 
           {
             logger: (m) => {
 
