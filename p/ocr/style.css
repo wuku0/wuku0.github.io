@@ -1,89 +1,71 @@
-body {
-  font-family: Arial, sans-serif;
-  background-color: #1a1a1a;
-  color: #fff;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  margin: 0;
-}
+body { font-family: Arial, sans-serif; background-color: #1a1a1a; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
 
-.container {
-  background-color: #333;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  padding: 20px;
-  max-width: 900px;
-  display: flex;
-}
+.container { background-color: #333; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); padding: 20px; width: 90%;  }
 
-.left-box {
-  flex: 1;
-  padding: 20px;
-}
-#fileInput {
-  display: none;
-}
+.left-box { flex: 1; padding: 20px; } #fileInput { display: none; }
 
-.upload-button {
-  background-color: #007bff;
-  color: #fff;
-  border: none;
-  cursor: pointer;
-  padding: 12px 20px;
-  border-radius: 4px;
-  font-size: 16px;
-  display: inline-block;
-  margin-bottom: 20px;
-}
+.upload-button { background-color: #007bff; color: #fff; border: none; cursor: pointer; padding: 12px 20px; border-radius: 4px; font-size: 16px; }
 
-.upload-button:hover {
-  background-color: #0056b3;
-}
+.upload-button:hover { background-color: #1ED760;  }
 
-.camera-icon {
-  width: 20px;
-  height: 20px;
-  margin-right: 8px;
-}
+.camera-icon { width: auto;  margin-right: 8px; }
 
-.preview-image {
-  max-width: 100%;
-  height: auto;
-  max-height: 200px;
-  margin-top: 20px;
-  display: none;
-}
+.preview-image { width: auto;  max-height: 500px;}
 
-.right-box {
-  flex: 1;
-  padding: 20px;
-  background-color: #444;
-  border-radius: 8px;
-  overflow-y: auto;
-}
-
-.ocr-output {
-  white-space: pre-wrap;
-  font-size: 16px;
-  overflow-wrap: break-word;
-  max-height: 200px;
-  word-wrap: break-word;
-  word-break: break-word;
-}
-
-.console-log {
-  white-space: pre-wrap;
-  font-size: 16px;
-  overflow-wrap: break-word;
-  word-wrap: break-word;
-  word-break: break-word;
-  color: #f1c40f;
-  margin-top: 10px;
-}
+.right-box { flex: none;  padding: 20px; background-color: #444; border-radius: 8px; overflow-y: auto;
 
 
-.upload-button:hover {
-	background-color: #1ED760;
+@media (max-width:768px) {
+	margin-top:20px; 
+	width:auto; 
 }
+
+}
+
+.ocr-output { white-space: pre-wrap; font-size: clamp(12px,2vw,16px);  word-wrap: break-word; word-break: break-word;
+
+
+scrollbar-width:auto; 
+scrollbar-color:#007bff #333;
+
+
+&::-webkit-scrollbar {
+	width:auto; 
+	height:auto; 
+}
+&::-webkit-scrollbar-track {
+	background:#333; 
+}
+&::-webkit-scrollbar-thumb {
+	background:#007bff; 
+	border-radius:auto; 
+}
+
+}
+
+.console-log { white-space: pre-wrap; font-size: clamp(12px,2vw,16px);  overflow-wrap: break-word; word-wrap: break-word; word-break: break-word; color:#f1c40f;
+
+margin-top:auto; 
+
+
+scrollbar-width:auto; 
+scrollbar-color:#f1c40f #333;
+
+
+&::-webkit-scrollbar {
+	width:auto; 
+	height:auto; 
+}
+&::-webkit-scrollbar-track {
+	background:#333; 
+}
+&::-webkit-scrollbar-thumb {
+	background:#f1c40f; 
+	border-radius:auto; 
+}
+
+}
+
+.copyButton { background-color: #007bff; color: #fff; border: none; cursor: pointer; padding: 12px 20px; border-radius: 4px; font-size: 16px; }
+
+.copyButton:hover { background-color: #1ED760;  }
