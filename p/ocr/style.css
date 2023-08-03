@@ -22,6 +22,9 @@ body {
   flex: 1;
   padding: 20px;
 }
+#fileInput {
+  display: none;
+}
 
 .upload-button {
   background-color: #007bff;
