@@ -84,3 +84,15 @@ function importFile(event) {
     };
     reader.readAsText(file);
   }
+
+function copyTextareaContent() {
+  const textarea = document.getElementById("noteContent");
+  textarea.select();
+  document.execCommand("copy");
+  textarea.setSelectionRange(0, 0);
+  const copyButton = document.getElementById("copyButton");
+  setTimeout(() => {
+  }, 1000); 
+}
+const copyButton = document.getElementById("copyButton");
+copyButton.addEventListener("click", copyTextareaContent);
