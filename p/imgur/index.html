@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>random imgur uwu</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="fa.css">
+    <script src="jq.js"></script>
+    <script src="https://kit.fontawesome.com/f36591d8ab.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="randomImgur">
+      <div class="stuff">
+        <h2>Random Image Generator</h2>
+        <input type="button" onclick="randomString();" value="Get an image">
+        <img src="">
+        <h3>Imgur URL:</h3>
+        <div id="output">
+            <a id="imgurLink" href="#" target="_blank"></a>
+            <button id="copyButton" onclick="copyToClipboard();"><i class="fa-sharp fa-regular fa-copy"></i></button>
+        </div>
+        <h3>Failed attempts:</h3>
+        <div id="failedAttempts"></div>
+      </div>
+    </div>
+    <div id="popupModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <p>Warning: The images on this page are hosted on imgur servers and might be 18+. Proceed with caution.</p>
+        </div>
+    </div>    
+<script src="script.js"></script>    
+</body>
+</html>
