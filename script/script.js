@@ -1,28 +1,3 @@
-(function(c,l,a,r,i,t,y){
-  c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-  t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-  y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-})(window, document, "clarity", "script", "idqs369fqf");
-
-function formatTime(time) {
-  return time.toLocaleString(undefined, {
-    hour: 'numeric',
-    minute: 'numeric',
-    hour12: true,
-  });
-}
-function displayTime() {
-  const zagrebTime = new Date().toLocaleString('en-US', {
-    timeZone: 'Europe/Zagreb',
-  });
-  document.getElementById('zagrebTime').textContent = formatTime(new Date(zagrebTime));
-  const visitorTime = new Date();
-  document.getElementById('visitorTime').textContent = formatTime(visitorTime);
-}
-displayTime();
-setInterval(displayTime, 1000);
-
-
 function showQuote() {
   const quoteElement = document.getElementById("quote");
   quoteElement.style.display = "block";
