@@ -72,7 +72,7 @@ body {
      
      document.getElementById("submitButton").addEventListener("click", function() {
        const uuid = document.getElementById("uuidInput").value;
-       const url = `https://abstract.land/api/kahoot/private/${uuid}`;
+       const url = `https://play.kahoot.it/rest/kahoots/${uuid}`;
        
        fetch(url)
          .then(response => response.json())
