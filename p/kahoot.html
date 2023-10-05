@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
   <head>
     <title>Kahoot cheat</title>
@@ -5,9 +6,8 @@
     <link rel="icon" type="image/x-icon" href="/images/hoot.jpg">
     <script src="https://cdn.counter.dev/script.js" data-id="d5378282-a7bf-4de1-b215-693a25f3b961" data-utcoffset="2"></script>
     <meta name="description" content="Easy to understand kahoot cheat">
-Seems to be borked, as kahoot updated api, working on a fix.
-<style>
-#output {
+    <style>
+        #output {
   background-color: #1f1f1f;
   padding: 15px;
   margin: 30px auto;
@@ -56,6 +56,31 @@ body {
 #clearButton:hover {
   background-color: #e6e6e6;
 }
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.7);
+      }
+
+      .modal-content {
+        margin: 15% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+      }
+
+      .close {
+        color: red;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+      }
     </style>
   </head>
   <body>
@@ -68,37 +93,58 @@ body {
       <button id="clearButton">Clear</button>
     </div>
     <div id="output"></div>
+
+    <div id="popupModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <p>Please click on request access, then close this popup and use kacheese</p>
+        <iframe src="https://cors-anywhere.herokuapp.com/" frameborder="0" style="width: 100%; height: 400px;"></iframe>
+      </div>
+    </div>
+
     <script>
       const colorList = ["red", "blue", "yellow", "green"];
      
-     document.getElementById("submitButton").addEventListener("click", function() {
-       const uuid = document.getElementById("uuidInput").value;
-       const url = `https://play.kahoot.it/rest/kahoots/${uuid}`;
+      document.getElementById("submitButton").addEventListener("click", function() {
+        const uuid = document.getElementById("uuidInput").value;
+        const corsProxy = "https://cors-anywhere.herokuapp.com/";
+        const url = `${corsProxy}https://play.kahoot.it/rest/kahoots/${uuid}`;
        
-       fetch(url)
-         .then(response => response.json())
-         .then(data => {
-           const questions = data.questions;
-           document.getElementById("output").innerHTML = `Title: ${data.title} <br><br>`;
-           for (let i = 0; i < questions.length; i++) {
-             for (let j = 0; j < questions[i].choices.length; j++) {
-               if (questions[i].choices[j].correct) {
-                 document.getElementById("output").innerHTML += `${i + 1}: ${questions[i].choices[j].answer}<br>`;
-                 document.getElementById("output").innerHTML += `<span style="color: ${colorList[j]}">${colorList[j]}</span><br><br>`;
-}
-}
-}
-})
-.catch(error => {
-document.getElementById("output").innerHTML = "Error: Invalid or non-existent Kahoot ID. Please enter a valid ID.";
-});
-});
-// by wuku#4042 on wuku.one
+        fetch(url)
+          .then(response => response.json())
+          .then(data => {
+            const questions = data.questions;
+            document.getElementById("output").innerHTML = `Title: ${data.title} <br><br>`;
+            for (let i = 0; i < questions.length; i++) {
+              for (let j = 0; j < questions[i].choices.length; j++) {
+                if (questions[i].choices[j].correct) {
+                  document.getElementById("output").innerHTML += `${i + 1}: ${questions[i].choices[j].answer}<br>`;
+                  document.getElementById("output").innerHTML += `<span style="color: ${colorList[j]}">${colorList[j]}</span><br><br>`;
+                }
+              }
+            }
+          })
+          .catch(error => {
+            document.getElementById("output").innerHTML = "Error: Invalid or non-existent Kahoot ID. Please enter a valid ID.";
+          });
+      });
   
-  document.getElementById("clearButton").addEventListener("click", function() {
-    document.getElementById("uuidInput").value = "";
-    document.getElementById("output").innerHTML = "";
-  });
-</script>
-</body>
+      document.getElementById("clearButton").addEventListener("click", function() {
+        document.getElementById("uuidInput").value = "";
+        document.getElementById("output").innerHTML = "";
+      });
+
+      function displayModal() {
+        const modal = document.getElementById("popupModal");
+        modal.style.display = "block";
+      }
+
+      function closeModal() {
+        const modal = document.getElementById("popupModal");
+        modal.style.display = "none";
+      }
+
+      displayModal();
+    </script>
+  </body>
 </html>
