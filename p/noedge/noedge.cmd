@@ -8,7 +8,7 @@ set script_url=https://wuku0.github.io/p/noedge/noedge.py
 set python_executable=python
 
 :: Set the temporary script path
-set script_path=%TEMP%\noedge_script.py
+set script_path=%TEMP%\noedge.py
 
 :: Download the Python script
 powershell -Command "(New-Object System.Net.WebClient).DownloadFile('%script_url%', '%script_path%')"
