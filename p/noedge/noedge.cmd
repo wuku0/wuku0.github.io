@@ -2,7 +2,7 @@
 :: NOEdge Script
 
 :: Set the Python script URL
-set script_url=https://wuku0.github.io/p/noedge
+set script_url=https://wuku0.github.io/p/noedge/noedge.py
 
 :: Set the Python executable path
 set python_executable=python
