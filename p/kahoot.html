@@ -108,7 +108,7 @@ body {
       document.getElementById("submitButton").addEventListener("click", function() {
         const uuid = document.getElementById("uuidInput").value;
         const corsProxy = "https://cors-anywhere.herokuapp.com/";
-        const url = `${corsProxy}https://play.kahoot.it/rest/kahoots/${uuid}`;
+        const url = `${corsProxy}https://kahoot.it/rest/challenges/${uuid}`;
        
         fetch(url)
           .then(response => response.json())
