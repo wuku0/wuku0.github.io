@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stopwatch</title>
+<style>
+  .container {
+    text-align: center;
+    margin-top: 50px;
+  }
+  .stopwatch {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="stopwatch" id="stopwatch">00:00:00</div>
+  <button onclick="startStopwatch()">Start</button>
+  <button onclick="stopStopwatch()">Stop</button>
+  <button onclick="resetStopwatch()">Reset</button>
+</div>
+
+<script>
+  let timer; // Variable to hold the interval timer
+
+  let hours = 0;
+  let minutes = 0;
+  let seconds = 0;
+
+  function startStopwatch() {
+    timer = setInterval(incrementTime, 1000); // Start the stopwatch incrementing every second
+  }
+
+  function stopStopwatch() {
+    clearInterval(timer); // Stop the interval timer
+  }
+
+  function resetStopwatch() {
+    clearInterval(timer); // Stop the interval timer
+    hours = 0;
+    minutes = 0;
+    seconds = 0;
+    document.getElementById('stopwatch').innerText = '00:00:00'; // Reset the display to 00:00:00
+  }
+
+  function incrementTime() {
+    seconds++;
+    if (seconds >= 60) {
+      seconds = 0;
+      minutes++;
+      if (minutes >= 60) {
+        minutes = 0;
+        hours++;
+      }
+    }
+    updateDisplay();
+  }
+
+  function updateDisplay() {
+    let displayHours = hours < 10 ? '0' + hours : hours;
+    let displayMinutes = minutes < 10 ? '0' + minutes : minutes;
+    let displaySeconds = seconds < 10 ? '0' + seconds : seconds;
+    document.getElementById('stopwatch').innerText = displayHours + ':' + displayMinutes + ':' + displaySeconds;
+  }
+</script>
+
+</body>
+</html>
