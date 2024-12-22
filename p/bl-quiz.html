@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deutsche Bundesländer Quiz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        header {
+            background-color: #0078d7;
+            color: white;
+            padding: 1rem;
+        }
+        #quiz-container {
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+        }
+        #state-image {
+            width: 300px;
+            height: 300px;
+            object-fit: contain;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        #options-container button {
+            display: block;
+            margin: 0.5rem auto;
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            cursor: pointer;
+            background: #0078d7;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        #options-container button:hover {
+            background: #005bb5;
+        }
+        #answer-input {
+            display: none;
+            width: calc(100% - 2rem);
+            padding: 0.5rem;
+            margin: 1rem auto;
+            font-size: 1rem;
+        }
+        #submit-button {
+            display: none;
+            padding: 0.5rem 1rem;
+            background: #0078d7;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #submit-button:hover {
+            background: #005bb5;
+        }
+        footer {
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Deutsche Bundesländer Quiz</h1>
+    </header>
+    <div id="quiz-container">
+        <img id="state-image" src="" alt="German state" />
+        <p id="question">Welches Bundesland wird gezeigt?</p>
+        <div id="options-container"></div>
+        <input type="text" id="answer-input" placeholder="Type your answer here" />
+        <button id="submit-button">Eingabe</button>
+        <p id="score">Score: 0</p>
+        <p id="highscore">Highscore: 0</p>
+        <label>
+            <input type="checkbox" id="toggle-game-mode"> Text Modus
+        </label>
+    </div>
+    <footer>
+        &copy; 2024 wuku0
+    </footer>
+
+    <script>
+        // German States Quiz App
+        const states = [
+            { name: "Thüringen", image: "https://wuku0.github.io/images/bundesl%C3%A4nder/Th%C3%BCringen.jpg" },
+            { name: "Nordrhein-Westfalen", image: "https://wuku0.github.io/images/bundesl%C3%A4nder/Nordrhein-Westpfalen.jpg" },
+            { name: "Bayern", image: "https://wuku0.github.io/images/bundesl%C3%A4nder/Bayern.jpg" },
+            { name: "Berlin", image: "https://wuku0.github.io/images/bundesl%C3%A4nder/Berlin.jpg" },
+            { name: "Brandenburg", image: "https://wuku0.github.io/images/bundesl%C3%A4nder/Brandenburg.jpg" },
+            { name: "Bremen", image: "https://wuku0.github.io/images/bundesl%C3%A4nder/Bremen.jpg" },
+            { name: "Hamburg", image: "https://wuku0.github.io/images/bundesl%C3%A4nder/Hamburg.jpg" },
+            { name: "Hessen", image: "https://wuku0.github.io/images/bundesl%C3%A4nder/Hessen.jpg" },
+            { name: "Mecklenburg-Vorpommern", image: "https://wuku0.github.io/images/bundesl%C3%A4nder/Mecklenburg-Vorpommern.jpg" },
+            { name: "Niedersachsen", image: "https://wuku0.github.io/images/bundesl%C3%A4nder/Niedersachsen.jpg" },
+            { name: "Rheinland-Pfalz", image: "https://wuku0.github.io/images/bundesl%C3%A4nder/Rheinland-Pfalz.jpg" },
+            { name: "Saarland", image: "https://wuku0.github.io/images/bundesl%C3%A4nder/Saarland.jpg" },
+            { name: "Sachsen", image: "https://wuku0.github.io/images/bundesl%C3%A4nder/Sachsen.jpg" },
+            { name: "Sachsen-Anhalt", image: "https://wuku0.github.io/images/bundesl%C3%A4nder/Sachsen-Anhalt.jpg" },
+            { name: "Schleswig-Holstein", image: "https://wuku0.github.io/images/bundesl%C3%A4nder/Schleswig-Holstein.jpg" },
+            { name: "Baden-Württemberg", image: "https://wuku0.github.io/images/bundesl%C3%A4nder/Baden-Württemberg.jpg" } 
+        ];
+
+        let score = 0;
+        let highscore = 0;
+        let gameMode = "multiple-choice"; // Default game mode
+
+        // DOM Elements
+        const stateImage = document.getElementById('state-image');
+        const questionText = document.getElementById('question');
+        const answerInput = document.getElementById('answer-input');
+        const optionsContainer = document.getElementById('options-container');
+        const submitButton = document.getElementById('submit-button');
+        const toggleGameMode = document.getElementById('toggle-game-mode');
+        const scoreDisplay = document.getElementById('score');
+        const highscoreDisplay = document.getElementById('highscore');
+
+        // Generate random question
+        function generateQuestion() {
+            const randomState = states[Math.floor(Math.random() * states.length)];
+            stateImage.src = randomState.image;
+            questionText.textContent = "Which German state is shown?";
+
+            if (gameMode === "multiple-choice") {
+                answerInput.style.display = "none";
+                submitButton.style.display = "none";
+                optionsContainer.innerHTML = "";
+
+                const shuffledStates = [...states].sort(() => Math.random() - 0.5).slice(0, 3);
+                shuffledStates.push(randomState);
+                shuffledStates.sort(() => Math.random() - 0.5);
+
+                shuffledStates.forEach(state => {
+                    const button = document.createElement('button');
+                    button.textContent = state.name;
+                    button.addEventListener('click', () => checkAnswer(state.name, randomState.name));
+                    optionsContainer.appendChild(button);
+                });
+            } else {
+                optionsContainer.innerHTML = "";
+                answerInput.style.display = "block";
+                submitButton.style.display = "inline-block";
+                submitButton.onclick = () => checkAnswer(answerInput.value.trim(), randomState.name);
+            }
+        }
+
+        // Check answer
+        function checkAnswer(userAnswer, correctAnswer) {
+            if (userAnswer.toLowerCase() === correctAnswer.toLowerCase()) {
+                score++;
+                alert("Correct!");
+            } else {
+                score = 0;
+                alert(`Wrong! The correct answer was ${correctAnswer}.`);
+            }
+
+            highscore = Math.max(score, highscore);
+            updateScoreboard();
+            generateQuestion();
+        }
+
+        // Update scoreboard
+        function updateScoreboard() {
+            scoreDisplay.textContent = `Score: ${score}`;
+            highscoreDisplay.textContent = `Highscore: ${highscore}`;
+        }
+
+        // Toggle game mode
+        toggleGameMode.addEventListener('change', (e) => {
+            gameMode = e.target.checked ? "text-input" : "multiple-choice";
+            generateQuestion();
+        });
+
+        // Initialize game
+        document.addEventListener('DOMContentLoaded', () => {
+            generateQuestion();
+            updateScoreboard();
+        });
+    </script>
+</body>
+</html>
