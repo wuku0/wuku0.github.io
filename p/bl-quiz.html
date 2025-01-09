@@ -131,7 +131,7 @@
         function generateQuestion() {
             const randomState = states[Math.floor(Math.random() * states.length)];
             stateImage.src = randomState.image;
-            questionText.textContent = "Which German state is shown?";
+            questionText.textContent = "...";
 
             if (gameMode === "multiple-choice") {
                 answerInput.style.display = "none";
