@@ -19,12 +19,28 @@
         main {
             padding: 20px;
         }
-        .preview {
+        .preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
             margin-top: 20px;
         }
-        #output {
+        .preview img {
+            max-width: 200px;
+            height: auto;
+        }
+        .output-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
             margin-top: 20px;
             display: none;
+        }
+        .output img {
+            max-width: 200px;
+            height: auto;
         }
     </style>
 </head>
@@ -33,70 +49,81 @@
         <h1>Background Remover</h1>
     </header>
     <main>
-        <p>Upload an image to remove its background:</p>
-        <input type="file" id="imageInput" accept="image/*">
-        <div class="preview">
-            <img id="previewImage" alt="Image preview" style="max-width: 100%;">
-        </div>
+        <p>Upload images to remove their background:</p>
+        <input type="file" id="imageInput" accept="image/*" multiple>
+        <div class="preview-container" id="previewContainer"></div>
         <button id="removeBgBtn" disabled>Remove Background</button>
-        <div id="output">
-            <h3>Processed Image:</h3>
-            <img id="outputImage" alt="Image with background removed" style="max-width: 100%;">
-            <a id="downloadLink" download="background-removed.png">Download</a>
-        </div>
+        <div class="output-container" id="outputContainer"></div>
     </main>
     <script>
         const apiKey = "t9msBr5G1yyjMSKRjYAj23rE";
         const imageInput = document.getElementById('imageInput');
-        const previewImage = document.getElementById('previewImage');
+        const previewContainer = document.getElementById('previewContainer');
         const removeBgBtn = document.getElementById('removeBgBtn');
-        const outputImage = document.getElementById('outputImage');
-        const downloadLink = document.getElementById('downloadLink');
-        const outputDiv = document.getElementById('output');
+        const outputContainer = document.getElementById('outputContainer');
 
-        let uploadedFile;
+        let uploadedFiles = [];
 
         imageInput.addEventListener('change', () => {
-            const file = imageInput.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    previewImage.src = e.target.result;
-                    removeBgBtn.disabled = false;
-                    uploadedFile = file;
-                };
-                reader.readAsDataURL(file);
+            previewContainer.innerHTML = "";
+            uploadedFiles = Array.from(imageInput.files);
+
+            if (uploadedFiles.length > 0) {
+                uploadedFiles.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.classList.add('preview');
+                        previewContainer.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                });
+                removeBgBtn.disabled = false;
             }
         });
 
         removeBgBtn.addEventListener('click', async () => {
-            if (!uploadedFile) return;
+            if (uploadedFiles.length === 0) return;
+            outputContainer.innerHTML = "";
+            outputContainer.style.display = 'flex';
 
-            const formData = new FormData();
-            formData.append("image_file", uploadedFile);
-            formData.append("size", "auto");
+            for (const file of uploadedFiles) {
+                const formData = new FormData();
+                formData.append("image_file", file);
+                formData.append("size", "auto");
 
-            try {
-                const response = await fetch("https://api.remove.bg/v1.0/removebg", {
-                    method: "POST",
-                    headers: {
-                        "X-Api-Key": apiKey
-                    },
-                    body: formData
-                });
+                try {
+                    const response = await fetch("https://api.remove.bg/v1.0/removebg", {
+                        method: "POST",
+                        headers: {
+                            "X-Api-Key": apiKey
+                        },
+                        body: formData
+                    });
 
-                if (!response.ok) {
-                    throw new Error("Failed to remove background: " + response.statusText);
+                    if (!response.ok) {
+                        throw new Error("Failed to remove background: " + response.statusText);
+                    }
+
+                    const blob = await response.blob();
+                    const url = URL.createObjectURL(blob);
+
+                    const outputDiv = document.createElement('div');
+                    outputDiv.classList.add('output');
+                    const img = document.createElement('img');
+                    img.src = url;
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = url;
+                    downloadLink.download = "background-removed.png";
+                    downloadLink.textContent = "Download";
+
+                    outputDiv.appendChild(img);
+                    outputDiv.appendChild(downloadLink);
+                    outputContainer.appendChild(outputDiv);
+                } catch (error) {
+                    alert(error.message);
                 }
-
-                const blob = await response.blob();
-                const url = URL.createObjectURL(blob);
-
-                outputImage.src = url;
-                downloadLink.href = url;
-                outputDiv.style.display = 'block';
-            } catch (error) {
-                alert(error.message);
             }
         });
     </script>
