@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glassy Cooking Chatbot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .chat-container {
+            width: 400px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        .chat-box {
+            height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        .input-container {
+            display: flex;
+            margin-top: 10px;
+        }
+        input {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 10px;
+        }
+        button {
+            margin-left: 10px;
+            padding: 10px;
+            background: #ff758c;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <h2>Cooking Chatbot</h2>
+        <div class="chat-box" id="chat-box"></div>
+        <div class="input-container">
+            <input type="text" id="user-input" placeholder="Enter ingredients..." onkeypress="handleKeyPress(event)">
+            <button onclick="getRecipe()">Get Recipe</button>
+        </div>
+    </div>
+
+    <script>
+        async function getRecipe() {
+            const userInput = document.getElementById('user-input').value;
+            const chatBox = document.getElementById('chat-box');
+            
+            if (!userInput) return;
+            
+            chatBox.innerHTML += `<p><strong>You:</strong> ${userInput}</p>`;
+            
+            const response = await fetch(`https://api.spoonacular.com/recipes/findByIngredients?ingredients=${userInput}&number=1&apiKey=3e8231abd6ef450dba6bedd144db4a52`);
+            const data = await response.json();
+            
+            if (data.length > 0) {
+                const recipe = data[0];
+                const recipeUrl = `https://spoonacular.com/recipes/${recipe.title}-${recipe.id}`;
+                chatBox.innerHTML += `<p><strong>Bot:</strong> Try making ${recipe.title}. <button onclick="window.open('${recipeUrl}', '_blank')">View Recipe</button></p>`;
+            } else {
+                chatBox.innerHTML += `<p><strong>Bot:</strong> Sorry, I couldn't find a recipe with those ingredients.</p>`;
+            }
+            
+            document.getElementById('user-input').value = '';
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === "Enter") {
+                getRecipe();
+            }
+        }
+    </script>
+</body>
+</html>
