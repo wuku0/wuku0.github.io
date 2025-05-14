@@ -3,7 +3,11 @@ https://www.example.org
 https://www.example.net
 https://play-cs.com [counter, strike, cs, cs 1.6, csgo, 1.6]
 https://roko.cc [wuku, roko,]
-
+https://cnvmp3.com/ [yt, youtube, download, dl, ytdl, y, d]
+https://vocalremover.org [vocal, ai, vc, remover, org]
+https://chatgpt.com [AI, chat, gpt, chatgpt]
+https://grok.com [AI, chatgpt, grok, gpt]
+https://spotify.com [spotify, sptfy, music, musik, muzika]
 
 
 
