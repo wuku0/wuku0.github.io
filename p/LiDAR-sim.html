@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>LiDAR Simulation (Light Minimalist)</title>
+  <style>
+    body {
+      margin: 0;
+      background: #eee;
+    }
+    canvas {
+      display: block;
+      margin: auto;
+      background: #fff;
+      cursor: grab;
+    }
+    canvas:active {
+      cursor: grabbing;
+    }
+  </style>
+</head>
+<body>
+<canvas id="lidar" width="800" height="600"></canvas>
+<script>
+const canvas = document.getElementById("lidar");
+const ctx = canvas.getContext("2d");
+
+const lidar = {
+  x: canvas.width / 2,
+  y: canvas.height / 2,
+  angle: 0,
+  range: 300,
+  fov: 360,
+  rays: 360,
+  dragging: false,
+};
+
+const walls = [
+  { x1: 100, y1: 100, x2: 700, y2: 100 },
+  { x1: 700, y1: 100, x2: 700, y2: 500 },
+  { x1: 700, y1: 500, x2: 100, y2: 500 },
+  { x1: 100, y1: 500, x2: 100, y2: 100 },
+  { x1: 300, y1: 300, x2: 500, y2: 350 },
+  { x1: 400, y1: 150, x2: 450, y2: 250 },
+];
+
+function castRay(x, y, angle) {
+  const dx = Math.cos(angle);
+  const dy = Math.sin(angle);
+  let closest = null;
+  let minDist = Infinity;
+
+  for (let wall of walls) {
+    const { x1, y1, x2, y2 } = wall;
+    const denom = (x1 - x2) * dy - (y1 - y2) * dx;
+    if (denom === 0) continue;
+
+    const t = ((x1 - x) * dy - (y1 - y) * dx) / denom;
+    const u = -((x1 - x2) * (y1 - y) - (y1 - y2) * (x1 - x)) / denom;
+
+    if (t >= 0 && t <= 1 && u >= 0) {
+      const ix = x1 + t * (x2 - x1);
+      const iy = y1 + t * (y2 - y1);
+      const dist = Math.hypot(ix - x, iy - y);
+      if (dist < minDist) {
+        minDist = dist;
+        closest = { x: ix, y: iy };
+      }
+    }
+  }
+
+  return closest || { x: x + dx * lidar.range, y: y + dy * lidar.range };
+}
+
+function drawWalls() {
+  ctx.strokeStyle = "#444";
+  ctx.lineWidth = 1.5;
+  for (let wall of walls) {
+    ctx.beginPath();
+    ctx.moveTo(wall.x1, wall.y1);
+    ctx.lineTo(wall.x2, wall.y2);
+    ctx.stroke();
+  }
+}
+
+function drawLiDAR() {
+  ctx.fillStyle = "#000";
+  ctx.beginPath();
+  ctx.arc(lidar.x, lidar.y, 4, 0, Math.PI * 2);
+  ctx.fill();
+
+  for (let i = 0; i < lidar.rays; i++) {
+    const angle = (lidar.angle + (i / lidar.rays) * lidar.fov) * Math.PI / 180;
+    const end = castRay(lidar.x, lidar.y, angle);
+
+    ctx.strokeStyle = "rgba(0,0,0,0.1)";
+    ctx.beginPath();
+    ctx.moveTo(lidar.x, lidar.y);
+    ctx.lineTo(end.x, end.y);
+    ctx.stroke();
+
+    ctx.fillStyle = "#000";
+    ctx.beginPath();
+    ctx.arc(end.x, end.y, 1, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function animate() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawWalls();
+  drawLiDAR();
+  lidar.angle = (lidar.angle + 1) % 360;
+  requestAnimationFrame(animate);
+}
+animate();
+
+let offsetX, offsetY;
+
+canvas.addEventListener("mousedown", (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const mouseX = e.clientX - rect.left;
+  const mouseY = e.clientY - rect.top;
+  const dx = mouseX - lidar.x;
+  const dy = mouseY - lidar.y;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  if (dist < 10) {
+    lidar.dragging = true;
+    offsetX = dx;
+    offsetY = dy;
+  }
+});
+
+canvas.addEventListener("mousemove", (e) => {
+  if (lidar.dragging) {
+    const rect = canvas.getBoundingClientRect();
+    lidar.x = e.clientX - rect.left - offsetX;
+    lidar.y = e.clientY - rect.top - offsetY;
+  }
+});
+
+canvas.addEventListener("mouseup", () => lidar.dragging = false);
+canvas.addEventListener("mouseleave", () => lidar.dragging = false);
+</script>
+</body>
+</html>
