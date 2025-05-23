@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>macOS Startpage</title>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+  />
+  <style>
+    :root {
+      --bg-light: #f5f5f7cc;
+      --bg-dark: #1c1c1ecc;
+      --text-light: #000;
+      --text-dark: #fff;
+      --panel-light: #ffffffcc;
+      --panel-dark: #2c2c2ecc;
+      --accent: #007aff;
+      --glass: rgba(255, 255, 255, 0.25);
+      --glass-dark: rgba(44, 44, 46, 0.25);
+      --blur: blur(20px);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    [data-theme="light"] body {
+      background: var(--bg-light);
+      color: var(--text-light);
+    }
+
+    [data-theme="dark"] body {
+      background: var(--bg-dark);
+      color: var(--text-dark);
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        "Helvetica Neue", Arial;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+    }
+
+    .search-container {
+      display: flex;
+      align-items: center;
+      background: var(--glass);
+      border-radius: 20px;
+      padding: 1rem 2rem;
+      backdrop-filter: var(--blur);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      position: relative;
+    }
+
+    [data-theme="dark"] .search-container {
+      background: var(--glass-dark);
+    }
+
+    .search-bar {
+      border: none;
+      background: transparent;
+      font-size: 1.25rem;
+      color: inherit;
+      outline: none;
+      width: 400px;
+    }
+
+    .search-icon {
+      margin-right: 1rem;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .search-icon img {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+
+    .engine-selector {
+      position: absolute;
+      top: 30px;
+      left: 0;
+      background: var(--panel-light);
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      display: none;
+      flex-direction: column;
+      padding: 0.5rem;
+      z-index: 10;
+      min-width: 140px;
+    }
+
+    [data-theme="dark"] .engine-selector {
+      background: var(--panel-dark);
+    }
+
+    .search-icon:hover .engine-selector {
+      display: flex;
+    }
+
+    .engine-option {
+      padding: 0.25rem 0.5rem;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      color: inherit;
+      user-select: none;
+    }
+
+    .engine-option:hover {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    [data-theme="dark"] .engine-option:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .engine-option img {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+    }
+
+    .predictive-suggestions {
+      position: absolute;
+      top: 60px;
+      left: 2rem;
+      right: 2rem;
+      background: var(--panel-light);
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      display: none;
+      flex-direction: column;
+      padding: 0.5rem;
+      z-index: 10;
+      max-width: 400px;
+    }
+
+    [data-theme="dark"] .predictive-suggestions {
+      background: var(--panel-dark);
+    }
+
+    .suggestion-item {
+      padding: 0.25rem 0.5rem;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: background 0.2s;
+      font-size: 0.9rem;
+      color: inherit;
+      user-select: none;
+    }
+
+    .suggestion-item:hover {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    [data-theme="dark"] .suggestion-item:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .top-left,
+    .top-right,
+    .bottom-left {
+      position: absolute;
+      font-size: 0.9rem;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+    }
+
+    .top-left {
+      top: 0;
+      left: 0;
+    }
+    .top-right {
+      top: 0;
+      right: 0;
+      gap: 0.5rem;
+    }
+    .bottom-left {
+      bottom: 0;
+      left: 0;
+      gap: 0.5rem;
+      font-weight: 500;
+    }
+
+    .icon-button {
+      background: transparent;
+      border: none;
+      color: inherit;
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 0 0.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.3s;
+    }
+    .icon-button:hover {
+      color: var(--accent);
+    }
+
+    #bookmarkPopup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--panel-light);
+      padding: 1rem 1.5rem;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+      display: none;
+      flex-direction: column;
+      width: 360px;
+      max-width: 90vw;
+      z-index: 20;
+      color: inherit;
+    }
+
+    [data-theme="dark"] #bookmarkPopup {
+      background: var(--panel-dark);
+    }
+
+    #bookmarkPopup header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    #bookmarkPopup header h2 {
+      margin: 0;
+      font-weight: 600;
+      font-size: 1.25rem;
+    }
+
+    #bookmarkPopup header .icon-button {
+      font-size: 1.5rem;
+      line-height: 1;
+    }
+
+    #addBookmarkForm {
+      display: none;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    #addBookmarkForm input {
+      padding: 0.5rem 0.75rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      outline-offset: 2px;
+      outline-color: var(--accent);
+      transition: border-color 0.3s;
+      background: var(--panel-light);
+      color: var(--text-light);
+    }
+
+    [data-theme="dark"] #addBookmarkForm input {
+      border-color: #555;
+      background: var(--panel-dark);
+      color: var(--text-dark);
+    }
+
+    #addBookmarkForm input:focus {
+      border-color: var(--accent);
+    }
+
+    #addBookmarkForm .icon-button.add-submit {
+      align-self: flex-end;
+      font-size: 1.4rem;
+      background-color: var(--accent);
+      color: white;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    #addBookmarkForm .icon-button.add-submit:hover {
+      background-color: #005fcc;
+    }
+
+    .bookmark-list {
+      max-height: 240px;
+      overflow-y: auto;
+      border-top: 1px solid #ccc;
+      padding-top: 0.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    [data-theme="dark"] .bookmark-list {
+      border-top-color: #555;
+    }
+
+    .bookmark-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--glass);
+      border-radius: 12px;
+      padding: 0.4rem 0.75rem;
+      transition: background-color 0.2s;
+      user-select: none;
+    }
+
+    [data-theme="dark"] .bookmark-item {
+      background: var(--glass-dark);
+    }
+
+    .bookmark-item:hover {
+      background-color: rgba(0, 122, 255, 0.1);
+    }
+
+    .bookmark-item a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+      flex-grow: 1;
+      overflow-wrap: anywhere;
+    }
+
+    .bookmark-item button {
+      background: transparent;
+      border: none;
+      color: #cc0000;
+      font-size: 1.1rem;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.2s;
+      padding: 0 0.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
+
+    .bookmark-item:hover button {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="top-left">
+      <button class="icon-button" onclick="toggleTheme()"
+        ><i class="fas fa-adjust"></i
+      ></button>
+    </div>
+    <div class="top-right" id="bookmarkContainer">
+      <button class="icon-button" title="Bookmarks" onclick="toggleBookmarkPopup()">
+        <i class="fas fa-bookmark"></i>
+      </button>
+    </div>
+    <div class="bottom-left" id="weatherLocationContainer">
+      <span id="location">Locating...</span> - <span id="weather">Loading...</span>
+    </div>
+
+    <div class="search-container">
+      <div class="search-icon">
+        <img
+          id="engineLogo"
+          src="https://www.google.com/favicon.ico"
+          alt="engine"
+        />
+        <div class="engine-selector" id="engineSelector">
+          <div class="engine-option" onclick="setEngine('Google')">
+            <img src="https://www.google.com/favicon.ico" alt="Google" />
+            Google
+          </div>
+          <div class="engine-option" onclick="setEngine('DuckDuckGo')">
+            <img src="https://duckduckgo.com/favicon.ico" alt="DuckDuckGo" />
+            DuckDuckGo
+          </div>
+          <div class="engine-option" onclick="setEngine('Bing')">
+            <img src="https://www.bing.com/sa/simg/favicon-2x.ico" alt="Bing" />
+            Bing
+          </div>
+          <div class="engine-option" onclick="setEngine('Yahoo')">
+            <img src="https://www.yahoo.com/favicon.ico" alt="Yahoo" />
+            Yahoo
+          </div>
+          <div class="engine-option" onclick="setEngine('Brave')">
+            <img
+              src="https://wuku0.github.io/images/brave-browser-icon.svg"
+              alt="Brave"
+            />
+            Brave
+          </div>
+          <div class="engine-option" onclick="setEngine('Startpage')">
+            <img src="https://www.startpage.com/favicon.ico" alt="Startpage" />
+            Startpage
+          </div>
+          <div class="engine-option" onclick="setEngine('Arc')">
+            <img src="https://raw.githubusercontent.com/wuku0/wuku0.github.io/62a64c46e5777810b98fcd7d8ed6fcfbf38b3249/images/arc-browser-icon.svg" alt="Arc" />
+            Arc
+          </div>
+          <div class="engine-option" onclick="setEngine('Ecosia')">
+            <img src="https://play-lh.googleusercontent.com/_nuyeEgn6In53vmNpgZkj2nVyR26CPZe3QxKOIk1jWVqwkt4WGWo6m4k4CGNS_3C7Og" alt="Ecosia" />
+            Ecosia
+          </div>
+        </div>
+      </div>
+      <input
+        type="text"
+        class="search-bar"
+        id="searchInput"
+        placeholder="Search the web..."
+        oninput="fetchSuggestions()"
+        onkeydown="if(event.key==='Enter') performSearch()"
+      />
+      <div class="predictive-suggestions" id="suggestionsList"></div>
+    </div>
+  </div>
+
+  <div id="bookmarkPopup" role="dialog" aria-modal="true" aria-labelledby="bmTitle">
+    <header>
+      <h2 id="bmTitle">Bookmarks</h2>
+      <button
+        class="icon-button"
+        aria-label="Close bookmarks"
+        onclick="toggleBookmarkPopup()"
+      >
+        <i class="fas fa-times"></i>
+      </button>
+    </header>
+
+    <button
+      class="icon-button"
+      id="toggleAddFormBtn"
+      aria-label="Add new bookmark"
+      title="Add new bookmark"
+      style="font-size: 1.8rem; margin-bottom: 1rem; align-self: flex-start;"
+      onclick="toggleAddForm()"
+    >
+      <i class="fas fa-plus"></i>
+    </button>
+
+    <form id="addBookmarkForm" onsubmit="event.preventDefault(); addBookmark();">
+      <input type="text" id="bmName" placeholder="Bookmark name" required />
+      <input type="url" id="bmUrl" placeholder="Bookmark URL" required />
+      <button class="icon-button add-submit" type="submit" aria-label="Add bookmark">
+        <i class="fas fa-check"></i>
+      </button>
+    </form>
+
+    <div class="bookmark-list" id="bookmarkList" aria-live="polite" aria-relevant="additions"></div>
+  </div>
+
+  <script>
+    const searchEngines = {
+      Google: {
+        url: "https://www.google.com/search?q=",
+        icon: "https://www.google.com/favicon.ico",
+      },
+      DuckDuckGo: {
+        url: "https://duckduckgo.com/?q=",
+        icon: "https://duckduckgo.com/favicon.ico",
+      },
+      Bing: {
+        url: "https://www.bing.com/search?q=",
+        icon: "https://www.bing.com/sa/simg/favicon-2x.ico",
+      },
+      Yahoo: {
+        url: "https://search.yahoo.com/search?p=",
+        icon: "https://www.yahoo.com/favicon.ico",
+      },
+      Brave: {
+        url: "https://search.brave.com/search?q=",
+        icon: "https://wuku0.github.io/images/brave-browser-icon.svg",
+      },
+      Startpage: {
+        url: "https://www.startpage.com/do/search?query=",
+        icon: "https://www.startpage.com/favicon.ico",
+      },
+      Arc: {
+        url: "https://arc.net/search?q=",
+        icon: "https://raw.githubusercontent.com/wuku0/wuku0.github.io/62a64c46e5777810b98fcd7d8ed6fcfbf38b3249/images/arc-browser-icon.svg",
+      },
+      Ecosia: {
+        url: "https://www.ecosia.org/search?q=",
+        icon: "https://play-lh.googleusercontent.com/_nuyeEgn6In53vmNpgZkj2nVyR26CPZe3QxKOIk1jWVqwkt4WGWo6m4k4CGNS_3C7Og",
+      },
+    };
+
+    // Load saved theme
+    let currentTheme = localStorage.getItem("theme") || "light";
+    document.documentElement.setAttribute("data-theme", currentTheme);
+
+    // Load saved search engine
+    let currentEngine = localStorage.getItem("searchEngine") || "Google";
+    if (!searchEngines[currentEngine]) {
+      currentEngine = "Google";
+      localStorage.setItem("searchEngine", currentEngine);
+    }
+    document.getElementById("engineLogo").src = searchEngines[currentEngine].icon;
+
+    // Load bookmarks from localStorage
+    function loadBookmarks() {
+      const bookmarkList = document.getElementById("bookmarkList");
+      bookmarkList.innerHTML = "";
+      const bookmarks = JSON.parse(localStorage.getItem("bookmarks") || "[]");
+      bookmarks.forEach(({ name, url }) => {
+        const container = document.createElement("div");
+        container.className = "bookmark-item";
+
+        const link = document.createElement("a");
+        link.href = url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = name;
+
+        const delBtn = document.createElement("button");
+        delBtn.setAttribute("aria-label", `Delete bookmark ${name}`);
+        delBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
+        delBtn.onclick = () => {
+          container.remove();
+          const updatedBookmarks = bookmarks.filter((b) => b.name !== name || b.url !== url);
+          localStorage.setItem("bookmarks", JSON.stringify(updatedBookmarks));
+        };
+
+        container.appendChild(link);
+        container.appendChild(delBtn);
+        bookmarkList.appendChild(container);
+      });
+    }
+
+    // Initialize bookmarks on page load
+    loadBookmarks();
+
+    function performSearch() {
+      const query = document.getElementById("searchInput").value;
+      if (query.trim()) {
+        window.location.href = searchEngines[currentEngine].url + encodeURIComponent(query);
+        document.getElementById("suggestionsList").style.display = "none";
+      }
+    }
+
+    function setEngine(engine) {
+      currentEngine = engine;
+      localStorage.setItem("searchEngine", engine);
+      document.getElementById("engineLogo").src = searchEngines[engine].icon;
+      document.getElementById("suggestionsList").style.display = "none";
+      document.getElementById("searchInput").value = "";
+    }
+
+    function fetchSuggestions() {
+      const query = document.getElementById("searchInput").value.trim();
+      const suggestionsList = document.getElementById("suggestionsList");
+
+      if (currentEngine !== "Google" || !query) {
+        suggestionsList.style.display = "none";
+        suggestionsList.innerHTML = "";
+        return;
+      }
+
+      const proxyUrl = "https://corsproxy.io/?";
+      const apiUrl = `http://suggestqueries.google.com/complete/search?client=firefox&q=${encodeURIComponent(query)}`;
+
+      fetch(proxyUrl + apiUrl)
+        .then((res) => {
+          if (!res.ok) throw new Error("Network response was not ok");
+          return res.json();
+        })
+        .then((data) => {
+          const suggestions = data[1].slice(0, 5);
+          suggestionsList.innerHTML = "";
+          if (suggestions.length > 0) {
+            suggestions.forEach((suggestion) => {
+              const div = document.createElement("div");
+              div.className = "suggestion-item";
+              div.textContent = suggestion;
+              div.onclick = () => {
+                document.getElementById("searchInput").value = suggestion;
+                suggestionsList.style.display = "none";
+                performSearch();
+              };
+              suggestionsList.appendChild(div);
+            });
+            suggestionsList.style.display = "flex";
+          } else {
+            suggestionsList.style.display = "none";
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching suggestions:", error);
+          suggestionsList.style.display = "none";
+          suggestionsList.innerHTML = "";
+        });
+    }
+
+    // Hide suggestions when clicking outside
+    document.addEventListener("click", (event) => {
+      const suggestionsList = document.getElementById("suggestionsList");
+      const searchContainer = document.querySelector(".search-container");
+      if (!searchContainer.contains(event.target)) {
+        suggestionsList.style.display = "none";
+      }
+    });
+
+    function toggleTheme() {
+      const html = document.documentElement;
+      const newTheme = html.getAttribute("data-theme") === "light" ? "dark" : "light";
+      html.setAttribute("data-theme", newTheme);
+      localStorage.setItem("theme", newTheme);
+      document.getElementById("suggestionsList").style.display = "none";
+    }
+
+    function toggleBookmarkPopup() {
+      const popup = document.getElementById("bookmarkPopup");
+      const suggestionsList = document.getElementById("suggestionsList");
+      const isOpen = popup.style.display === "flex";
+      if (isOpen) {
+        popup.style.display = "none";
+        hideAddForm();
+      } else {
+        popup.style.display = "flex";
+        suggestionsList.style.display = "none";
+      }
+    }
+
+    function toggleAddForm() {
+      const form = document.getElementById("addBookmarkForm");
+      const suggestionsList = document.getElementById("suggestionsList");
+      if (form.style.display === "flex") {
+        hideAddForm();
+      } else {
+        form.style.display = "flex";
+        document.getElementById("bmName").focus();
+        suggestionsList.style.display = "none";
+      }
+    }
+
+    function hideAddForm() {
+      const form = document.getElementById("addBookmarkForm");
+      form.style.display = "none";
+      document.getElementById("bmName").value = "";
+      document.getElementById("bmUrl").value = "";
+    }
+
+    function addBookmark() {
+      const name = document.getElementById("bmName").value.trim();
+      const url = document.getElementById("bmUrl").value.trim();
+      if (!name || !url) return;
+
+      const container = document.createElement("div");
+      container.className = "bookmark-item";
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = name;
+
+      const delBtn = document.createElement("button");
+      delBtn.setAttribute("aria-label", `Delete bookmark ${name}`);
+      delBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
+      delBtn.onclick = () => {
+        container.remove();
+        const bookmarks = JSON.parse(localStorage.getItem("bookmarks") || "[]");
+        const updatedBookmarks = bookmarks.filter((b) => b.name !== name || b.url !== url);
+        localStorage.setItem("bookmarks", JSON.stringify(updatedBookmarks));
+      };
+
+      container.appendChild(link);
+      container.appendChild(delBtn);
+
+      document.getElementById("bookmarkList").appendChild(container);
+
+      // Save to localStorage
+      const bookmarks = JSON.parse(localStorage.getItem("bookmarks") || "[]");
+      bookmarks.push({ name, url });
+      localStorage.setItem("bookmarks", JSON.stringify(bookmarks));
+
+      hideAddForm();
+    }
+
+    const weatherDiv = document.getElementById("weather");
+    const locationDiv = document.getElementById("location");
+
+    fetch("https://ipapi.co/json/")
+      .then((res) => res.json())
+      .then((data) => {
+        const { city, latitude, longitude } = data;
+        locationDiv.textContent = city;
+
+        fetch(
+          `https://api.weatherapi.com/v1/current.json?key=676d45a904984666818150526252305&q=${latitude},${longitude}&aqi=no`
+        )
+          .then((res) => res.json())
+          .then((data) => {
+            const temp = Math.round(data.current.temp_c);
+            weatherDiv.textContent = `${data.current.condition.text}, ${temp}°C`;
+          })
+          .catch(() => {
+            weatherDiv.textContent = "Weather unavailable";
+          });
+      })
+      .catch(() => {
+        locationDiv.textContent = "Location unavailable";
+        weatherDiv.textContent = "Weather unavailable";
+      });
+  </script>
+</body>
+</html>
