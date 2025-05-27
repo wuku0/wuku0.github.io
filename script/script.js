@@ -33,7 +33,7 @@ var currentDate = showDate();
 dateElement.innerHTML = currentDate;
 
 async function scrapeSteamProfile() {
-  const proxyURL = 'https://cors-anywhere.herokuapp.com/';
+  const proxyURL = 'https://corsproxy.io/';
   const steamProfileURL = 'https://steamcommunity.com/id/sirwuku';
   try {
     const response = await fetch(proxyURL + steamProfileURL);
