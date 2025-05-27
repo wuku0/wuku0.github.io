@@ -2,7 +2,7 @@
 <html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-device, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>macOS Startpage</title>
   <link
     rel="stylesheet"
@@ -573,7 +573,7 @@
         id="searchInput"
         placeholder="Search the web..."
         oninput="fetchSuggestions()"
-       49:      onkeydown="if(event.key==='Enter') performSearch()"
+        onkeydown="if(event.key==='Enter') performSearch()"
       />
       <div class="predictive-suggestions" id="suggestionsList"></div>
     </div>
@@ -840,6 +840,28 @@
 
       hideAddForm();
     }
+
+    // Check for query parameter in URL and perform Google search
+    function checkUrlForQuery() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const query = urlParams.get(""); // Empty key for queries like /s?what-is-an-elephant
+      if (query && query.trim()) {
+        // Set engine to Google if not already
+        if (currentEngine !== "Google") {
+          setEngine("Google");
+        }
+        // Set search input value for UI consistency
+        document.getElementById("searchInput").value = query;
+        // Perform search
+        window.location.href = searchEngines["Google"].url + encodeURIComponent(query);
+      }
+    }
+
+    // Run on page load
+    window.onload = function () {
+      checkUrlForQuery();
+      loadBookmarks();
+    };
 
     const weatherDiv = document.getElementById("weather");
     const locationDiv = document.getElementById("location");
