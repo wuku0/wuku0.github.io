@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>macOS Music Player</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #ece9e6, #ffffff);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .player-container {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            width: 400px;
+            max-height: 600px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .title-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 8px 8px 0 0;
+            margin: -20px -20px 20px -20px;
+        }
+
+        .traffic-lights {
+            display: flex;
+            gap: 8px;
+        }
+
+        .traffic-light {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .red { background: #ff5f56; }
+        .yellow { background: #ffbd2e; }
+        .green { background: #28c940; }
+
+        .upload-section {
+            margin-bottom: 20px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .upload-button {
+            background: #007aff;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: center;
+            transition: background 0.2s;
+        }
+
+        .upload-button:hover {
+            background: #005ecb;
+        }
+
+        .playlist {
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding-right: 10px;
+        }
+
+        .song-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 6px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .song-item:hover {
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .song-item.playing {
+            background: #007aff;
+            color: white;
+        }
+
+        .song-name {
+            flex-grow: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            margin-right: 10px;
+        }
+
+        .song-name input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font-family: inherit;
+            font-size: inherit;
+            color: inherit;
+            outline: none;
+        }
+
+        .download-button {
+            background: none;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            color: #333;
+            transition: color 0.2s;
+        }
+
+        .download-button:hover {
+            color: #007aff;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 0 0 8px 8px;
+            margin: 0 -20px -20px -20px;
+        }
+
+        .control-button {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #333;
+            transition: color 0.2s;
+        }
+
+        .control-button:hover {
+            color: #007aff;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 4px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 2px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: #007aff;
+            border-radius: 2px;
+            width: 0;
+            transition: width 0.1s linear;
+        }
+
+        /* Scrollbar styling */
+        .playlist::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .playlist::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .playlist::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+        }
+
+        .playlist::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="player-container">
+        <div class="title-bar">
+            <div class="traffic-lights">
+                <div class="traffic-light red"></div>
+                <div class="traffic-light yellow"></div>
+                <div class="traffic-light green"></div>
+            </div>
+            <h2 style="margin: 0; font-size: 16px;">Music Player</h2>
+            <div style="width: 36px;"></div>
+        </div>
+        <div class="upload-section">
+            <label for="file-upload" class="upload-button">Upload MP3 Files</label>
+            <input id="file-upload" type="file" accept="audio/mp3" multiple>
+        </div>
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <div class="playlist" id="playlist"></div>
+        <div class="controls">
+            <button class="control-button" id="prev-button" title="Previous">⏮</button>
+            <button class="control-button" id="play-pause-button" title="Play/Pause">▶️</button>
+            <button class="control-button" id="next-button" title="Next">⏭</button>
+            <button class="control-button" id="shuffle-button" title="Shuffle">🔀</button>
+        </div>
+    </div>
+
+    <audio id="audio-player" style="display: none;"></audio>
+
+    <script>
+        const audioPlayer = document.getElementById('audio-player');
+        const fileUpload = document.getElementById('file-upload');
+        const playlist = document.getElementById('playlist');
+        const playPauseButton = document.getElementById('play-pause-button');
+        const prevButton = document.getElementById('prev-button');
+        const nextButton = document.getElementById('next-button');
+        const shuffleButton = document.getElementById('shuffle-button');
+        const progressBar = document.getElementById('progress-bar');
+        const progressContainer = document.querySelector('.progress-container');
+
+        let songs = [];
+        let currentSongIndex = -1;
+        let isPlaying = false;
+        let isShuffled = false;
+        let shuffledIndices = [];
+
+        // Load songs into playlist
+        function loadSongs() {
+            playlist.innerHTML = '';
+            songs.forEach((song, index) => {
+                const songItem = document.createElement('div');
+                songItem.classList.add('song-item');
+                songItem.innerHTML = `
+                    <span class="song-name" title="Click to rename">${song.name}</span>
+                    <span>${formatDuration(song.duration || 0)}</span>
+                    <button class="download-button" title="Download">⬇</button>
+                `;
+                // Play song on click
+                songItem.addEventListener('click', (e) => {
+                    if (!e.target.classList.contains('download-button') && !e.target.closest('.song-name input')) {
+                        playSong(index);
+                    }
+                });
+                // Rename song
+                const songName = songItem.querySelector('.song-name');
+                songName.addEventListener('click', (e) => {
+                    if (e.target.tagName !== 'INPUT') {
+                        const input = document.createElement('input');
+                        input.value = song.name.replace(/\.mp3$/, '');
+                        songName.innerHTML = '';
+                        songName.appendChild(input);
+                        input.focus();
+                        input.addEventListener('blur', () => saveName(index, input.value));
+                        input.addEventListener('keypress', (e) => {
+                            if (e.key === 'Enter') {
+                                saveName(index, input.value);
+                            }
+                        });
+                    }
+                });
+                // Download song
+                const downloadButton = songItem.querySelector('.download-button');
+                downloadButton.addEventListener('click', () => downloadSong(index));
+                playlist.appendChild(songItem);
+            });
+        }
+
+        // Save new song name
+        function saveName(index, newName) {
+            if (newName.trim()) {
+                songs[index].name = newName.trim() + '.mp3';
+            }
+            loadSongs();
+            updatePlaylistUI();
+        }
+
+        // Download song with current name
+        async function downloadSong(index) {
+            const song = songs[index];
+            const response = await fetch(song.url);
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = song.name;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Format duration in mm:ss
+        function formatDuration(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+
+        // Handle file upload
+        fileUpload.addEventListener('change', async (event) => {
+            const files = Array.from(event.target.files);
+            for (const file of files) {
+                if (file.type === 'audio/mpeg') {
+                    const url = URL.createObjectURL(file);
+                    const audio = new Audio(url);
+                    await new Promise((resolve) => {
+                        audio.addEventListener('loadedmetadata', () => {
+                            songs.push({
+                                name: file.name,
+                                url: url,
+                                duration: audio.duration
+                            });
+                            resolve();
+                        });
+                    });
+                }
+            }
+            loadSongs();
+        });
+
+        // Play a song by index
+        function playSong(index) {
+            if (index < 0 || index >= songs.length) return;
+            currentSongIndex = index;
+            audioPlayer.src = songs[index].url;
+            audioPlayer.play();
+            isPlaying = true;
+            playPauseButton.textContent = '⏸';
+            updatePlaylistUI();
+        }
+
+        // Update playlist UI to highlight current song
+        function updatePlaylistUI() {
+            const songItems = playlist.querySelectorAll('.song-item');
+            songItems.forEach((item, index) => {
+                item.classList.toggle('playing', index === currentSongIndex);
+            });
+        }
+
+        // Play or pause
+        playPauseButton.addEventListener('click', () => {
+            if (!isPlaying && currentSongIndex >= 0) {
+                audioPlayer.play();
+                isPlaying = true;
+                playPauseButton.textContent = '⏸';
+            } else if (isPlaying) {
+                audioPlayer.pause();
+                isPlaying = false;
+                playPauseButton.textContent = '▶️';
+            }
+        });
+
+        // Previous song
+        prevButton.addEventListener('click', () => {
+            let prevIndex = currentSongIndex - 1;
+            if (isShuffled) {
+                prevIndex = shuffledIndices[currentSongIndex - 1] || 0;
+            }
+            if (prevIndex < 0) prevIndex = songs.length - 1;
+            playSong(prevIndex);
+        });
+
+        // Next song
+        nextButton.addEventListener('click', () => {
+            let nextIndex = currentSongIndex + 1;
+            if (isShuffled) {
+                nextIndex = shuffledIndices[currentSongIndex + 1] || 0;
+            }
+            if (nextIndex >= songs.length) nextIndex = 0;
+            playSong(nextIndex);
+        });
+
+        // Shuffle playlist
+        shuffleButton.addEventListener('click', () => {
+            isShuffled = !isShuffled;
+            shuffleButton.style.color = isShuffled ? '#007aff' : '#333';
+            if (isShuffled) {
+                shuffledIndices = [...Array(songs.length).keys()];
+                for (let i = shuffledIndices.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffledIndices[i], shuffledIndices[j]] = [shuffledIndices[j], shuffledIndices[i]];
+                }
+            }
+        });
+
+        // Update progress bar
+        audioPlayer.addEventListener('timeupdate', () => {
+            if (audioPlayer.duration) {
+                const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+                progressBar.style.width = `${progress}%`;
+            }
+        });
+
+        // Seek on progress bar click
+        progressContainer.addEventListener('click', (e) => {
+            const rect = progressContainer.getBoundingClientRect();
+            const pos = (e.clientX - rect.left) / rect.width;
+            audioPlayer.currentTime = pos * audioPlayer.duration;
+        });
+
+        // Auto-play next song
+        audioPlayer.addEventListener('ended', () => {
+            let nextIndex = currentSongIndex + 1;
+            if (isShuffled) {
+                nextIndex = shuffledIndices[currentSongIndex + 1] || 0;
+            }
+            if (nextIndex >= songs.length) nextIndex = 0;
+            playSong(nextIndex);
+        });
+
+        // Initial load (empty playlist)
+        loadSongs();
+    </script>
+</body>
+</html>
