@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Current Street Speed Limit</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        #container {
+            text-align: center;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #result {
+            font-size: 24px;
+            color: #333;
+        }
+        #error {
+            color: red;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h2>Find Current Street Speed Limit</h2>
+        <button onclick="getSpeedLimit()">Get Speed Limit</button>
+        <div id="result">Click the button to find the speed limit.</div>
+        <div id="error"></div>
+    </div>
+
+    <script>
+        function getSpeedLimit() {
+            const resultDiv = document.getElementById('result');
+            const errorDiv = document.getElementById('error');
+            resultDiv.textContent = 'Fetching location...';
+            errorDiv.textContent = '';
+
+            // Check if Geolocation is supported
+            if (!navigator.geolocation) {
+                errorDiv.textContent = 'Geolocation is not supported by your browser.';
+                resultDiv.textContent = '';
+                return;
+            }
+
+            // Get user's current position
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const { latitude, longitude } = position.coords;
+                    resultDiv.textContent = `Location found: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}. Fetching speed limit...`;
+
+                    try {
+                        // Overpass API query to find the nearest road with a maxspeed tag
+                        const overpassQuery = `
+                            [out:json];
+                            way(around:50,${latitude},${longitude})["highway"]["maxspeed"];
+                            out body;
+                        `;
+                        const overpassUrl = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`;
+
+                        const response = await fetch(overpassUrl);
+                        const data = await response.json();
+
+                        // Check if any roads with maxspeed were found
+                        if (data.elements.length > 0) {
+                            const road = data.elements[0];
+                            const speedLimit = road.tags.maxspeed;
+                            const roadName = road.tags.name || 'Unnamed road';
+                            resultDiv.textContent = `Speed Limit on ${roadName}: ${speedLimit}`;
+                        } else {
+                            resultDiv.textContent = 'No speed limit data found for nearby roads.';
+                        }
+                    } catch (error) {
+                        errorDiv.textContent = 'Error fetching speed limit data. Please try again.';
+                        resultDiv.textContent = '';
+                        console.error('Error:', error);
+                    }
+                },
+                (error) => {
+                    errorDiv.textContent = 'Unable to retrieve location. Please allow location access and try again.';
+                    resultDiv.textContent = '';
+                    console.error('Geolocation error:', error);
+                }
+            );
+        }
+    </script>
+</body>
+</html>
