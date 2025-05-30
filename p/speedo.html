@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Advanced Speedometer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background: #1a1a1a;
+      color: white;
+    }
+    #container {
+      text-align: center;
+    }
+    canvas {
+      background: #fff;
+      border-radius: 50%;
+      box-shadow: 0 0 10px rgba(255,255,255,0.2);
+    }
+    #info {
+      margin-top: 15px;
+      font-size: 18px;
+      color: #ccc;
+    }
+    #warning {
+      color: red;
+      font-weight: bold;
+      font-size: 20px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <canvas id="speedometer" width="300" height="300"></canvas>
+    <div id="info">Waiting for GPS...</div>
+    <div id="warning"></div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("speedometer");
+    const ctx = canvas.getContext("2d");
+    const info = document.getElementById("info");
+    const warning = document.getElementById("warning");
+
+    let currentSpeed = 0;
+    let speedLimit = null;
+    let nearbyCamera = false;
+    let lastQuery = 0;
+    const queryInterval = 15000; // ms
+    const cameraWarningDistance = 200; // meters
+
+    const MAPQUEST_API_KEY = 'YOUR_MAPQUEST_API_KEY'; // ← replace if you use fallback
+
+    function drawGauge() {
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const radius = 130;
+      const maxSpeed = 180;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Outer arc
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0.75 * Math.PI, 2.25 * Math.PI);
+      ctx.lineWidth = 10;
+      ctx.strokeStyle = "#ccc";
+      ctx.stroke();
+
+      // Tick marks
+      ctx.font = "12px Arial";
+      ctx.fillStyle = "#000";
+      for (let i = 0; i <= maxSpeed; i += 20) {
+        const angle = (i / maxSpeed) * 1.5 * Math.PI + 0.75 * Math.PI;
+        const x = centerX + (radius - 15) * Math.cos(angle);
+        const y = centerY + (radius - 15) * Math.sin(angle);
+        ctx.fillText(i.toString(), x, y);
+      }
+
+      // Needle
+      const speedAngle = (Math.min(currentSpeed, maxSpeed) / maxSpeed) * 1.5 * Math.PI + 0.75 * Math.PI;
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.lineTo(centerX + (radius - 30) * Math.cos(speedAngle), centerY + (radius - 30) * Math.sin(speedAngle));
+      ctx.strokeStyle = (speedLimit && currentSpeed > speedLimit) ? "red" : "black";
+      ctx.lineWidth = 4;
+      ctx.stroke();
+
+      // Speed text
+      ctx.font = "28px Arial";
+      ctx.fillStyle = "#000";
+      ctx.textAlign = "center";
+      ctx.fillText(`${Math.round(currentSpeed)} km/h`, centerX, centerY + 60);
+
+      // Speed limit
+      if (speedLimit) {
+        ctx.font = "16px Arial";
+        ctx.fillStyle = "red";
+        ctx.fillText(`Limit: ${speedLimit} km/h`, centerX, centerY + 90);
+      }
+    }
+
+    function haversine(lat1, lon1, lat2, lon2) {
+      const R = 6371000;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    async function querySpeedData(lat, lon) {
+      try {
+        // Use Overpass API first
+        const overpassQuery = `
+          [out:json];
+          (
+            way(around:50,${lat},${lon})["maxspeed"];
+            node(around:200,${lat},${lon})["highway"="speed_camera"];
+          );
+          out body;
+        `;
+        const overpassURL = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`;
+        const res = await fetch(overpassURL);
+        const data = await res.json();
+
+        return parseSpeedData(data, lat, lon);
+      } catch (err) {
+        console.warn("Overpass failed, trying MapQuest...");
+
+        // Fallback to MapQuest
+        try {
+          const url = `https://www.mapquestapi.com/geocoding/v1/reverse?key=${MAPQUEST_API_KEY}&location=${lat},${lon}&includeRoadMetadata=true&includeSpeedLimit=true`;
+          const res = await fetch(url);
+          const data = await res.json();
+          speedLimit = data.results?.[0]?.locations?.[0]?.roadMetadata?.speedLimit || null;
+          nearbyCamera = false; // MapQuest doesn't support cameras
+        } catch (e) {
+          console.error("MapQuest fallback also failed.");
+        }
+      }
+    }
+
+    function parseSpeedData(data, lat, lon) {
+      speedLimit = null;
+      nearbyCamera = false;
+
+      for (const el of data.elements) {
+        if (el.tags?.maxspeed) {
+          const match = el.tags.maxspeed.match(/\d+/);
+          if (match) speedLimit = parseInt(match[0]);
+        }
+        if (el.tags?.highway === "speed_camera") {
+          const dist = haversine(lat, lon, el.lat, el.lon);
+          if (dist < cameraWarningDistance) nearbyCamera = true;
+        }
+      }
+    }
+
+    function startTracking() {
+      if (!navigator.geolocation) {
+        info.textContent = "Geolocation not supported.";
+        return;
+      }
+
+      navigator.geolocation.watchPosition(
+        async (pos) => {
+          const { latitude, longitude, speed } = pos.coords;
+          currentSpeed = Math.max(0, speed ? speed * 3.6 : 0);
+
+          const now = Date.now();
+          if (now - lastQuery > queryInterval) {
+            lastQuery = now;
+            await querySpeedData(latitude, longitude);
+          }
+
+          let status = `Speed: ${Math.round(currentSpeed)} km/h`;
+          if (speedLimit) status += ` | Limit: ${speedLimit} km/h`;
+          info.textContent = status;
+
+          warning.textContent = "";
+          if (speedLimit && currentSpeed > speedLimit) {
+            warning.textContent = "⚠️ Over speed limit!";
+          } else if (nearbyCamera) {
+            warning.textContent = "📸 Speed camera nearby!";
+          }
+
+          drawGauge();
+        },
+        (err) => {
+          info.textContent = "GPS error. Please allow location.";
+          console.error(err);
+        },
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
+      );
+    }
+
+    drawGauge(); // Initial
+    startTracking();
+  </script>
+</body>
+</html>
