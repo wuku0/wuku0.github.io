@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Current Street Speed Limit</title>
+    <title>Live Speedometer with Speed Limit</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -22,91 +22,167 @@
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
+        canvas {
             margin-bottom: 20px;
         }
-        button:hover {
-            background-color: #0056b3;
-        }
-        #result {
-            font-size: 24px;
+        #info {
+            font-size: 18px;
             color: #333;
         }
         #error {
             color: red;
-            font-size: 18px;
+            font-size: 16px;
         }
     </style>
 </head>
 <body>
     <div id="container">
-        <h2>Find Current Street Speed Limit</h2>
-        <button onclick="getSpeedLimit()">Get Speed Limit</button>
-        <div id="result">Click the button to find the speed limit.</div>
+        <canvas id="speedometer" width="300" height="300"></canvas>
+        <div id="info">Waiting for location...</div>
         <div id="error"></div>
     </div>
 
     <script>
-        function getSpeedLimit() {
-            const resultDiv = document.getElementById('result');
-            const errorDiv = document.getElementById('error');
-            resultDiv.textContent = 'Fetching location...';
-            errorDiv.textContent = '';
+        const canvas = document.getElementById('speedometer');
+        const ctx = canvas.getContext('2d');
+        const infoDiv = document.getElementById('info');
+        const errorDiv = document.getElementById('error');
+        let currentSpeed = 0; // in km/h
+        let speedLimit = null; // in km/h
+        let lastQueryTime = 0; // To throttle API calls
+        const queryInterval = 10000; // Query speed limit every 10 seconds
 
-            // Check if Geolocation is supported
+        function drawSpeedometer() {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = canvas.width / 2 - 20;
+            const maxSpeed = 120; // Max speed displayed on speedometer (km/h)
+
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw outer circle
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 5;
+            ctx.stroke();
+
+            // Draw ticks and numbers
+            ctx.font = '12px Arial';
+            ctx.fillStyle = '#333';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            for (let i = 0; i <= maxSpeed; i += 10) {
+                const angle = ((i / maxSpeed) * 1.5 * Math.PI - 0.75 * Math.PI);
+                const x1 = centerX + (radius - 10) * Math.cos(angle);
+                const y1 = centerY + (radius - 10) * Math.sin(angle);
+                const x2 = centerX + (radius - (i % 20 === 0 ? 20 : 15)) * Math.cos(angle);
+                const y2 = centerY + (radius - (i % 20 === 0 ? 20 : 15)) * Math.sin(angle);
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = i % 20 === 0 ? 3 : 1;
+                ctx.stroke();
+
+                // Draw numbers for major ticks
+                if (i % 20 === 0) {
+                    const xText = centerX + (radius - 30) * Math.cos(angle);
+                    const yText = centerY + (radius - 30) * Math.sin(angle);
+                    ctx.fillText(i, xText, yText);
+                }
+            }
+
+            // Draw speed limit arc (if available)
+            if (speedLimit !== null) {
+                ctx.beginPath();
+                const limitAngle = ((speedLimit / maxSpeed) * 1.5 * Math.PI - 0.75 * Math.PI);
+                ctx.arc(centerX, centerY, radius - 5, -0.75 * Math.PI, limitAngle);
+                ctx.strokeStyle = 'red';
+                ctx.lineWidth = 5;
+                ctx.stroke();
+            }
+
+            // Draw speed needle
+            const speedAngle = ((currentSpeed / maxSpeed) * 1.5 * Math.PI - 0.75 * Math.PI);
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(centerX + (radius - 10) * Math.cos(speedAngle), centerY + (radius - 10) * Math.sin(speedAngle));
+            ctx.strokeStyle = currentSpeed > speedLimit && speedLimit !== null ? 'red' : 'black';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Draw center dot
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 5, 0, 2 * Math.PI);
+            ctx.fillStyle = '#333';
+            ctx.fill();
+        }
+
+        async function querySpeedLimit(latitude, longitude) {
+            try {
+                const overpassQuery = `
+                    [out:json];
+                    way(around:50,${latitude},${longitude})["highway"]["maxspeed"];
+                    out body;
+                `;
+                const overpassUrl = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`;
+                const response = await fetch(overpassUrl);
+                const data = await response.json();
+
+                if (data.elements.length > 0) {
+                    const road = data.elements[0];
+                    speedLimit = parseInt(road.tags.maxspeed, 10) || null;
+                    const roadName = road.tags.name || 'Unnamed road';
+                    infoDiv.textContent = `Speed: ${Math.round(currentSpeed)} km/h | Speed Limit: ${speedLimit || 'Unknown'} km/h on ${roadName}`;
+                } else {
+                    speedLimit = null;
+                    infoDiv.textContent = `Speed: ${Math.round(currentSpeed)} km/h | Speed Limit: Unknown`;
+                }
+            } catch (error) {
+                errorDiv.textContent = 'Error fetching speed limit data.';
+                console.error('Error:', error);
+            }
+            drawSpeedometer();
+        }
+
+        function startTracking() {
             if (!navigator.geolocation) {
                 errorDiv.textContent = 'Geolocation is not supported by your browser.';
-                resultDiv.textContent = '';
                 return;
             }
 
-            // Get user's current position
-            navigator.geolocation.getCurrentPosition(
+            navigator.geolocation.watchPosition(
                 async (position) => {
-                    const { latitude, longitude } = position.coords;
-                    resultDiv.textContent = `Location found: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}. Fetching speed limit...`;
+                    const { latitude, longitude, speed } = position.coords;
+                    currentSpeed = speed ? speed * 3.6 : 0; // Convert m/s to km/h
+                    infoDiv.textContent = `Speed: ${Math.round(currentSpeed)} km/h | Fetching speed limit...`;
 
-                    try {
-                        // Overpass API query to find the nearest road with a maxspeed tag
-                        const overpassQuery = `
-                            [out:json];
-                            way(around:50,${latitude},${longitude})["highway"]["maxspeed"];
-                            out body;
-                        `;
-                        const overpassUrl = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`;
-
-                        const response = await fetch(overpassUrl);
-                        const data = await response.json();
-
-                        // Check if any roads with maxspeed were found
-                        if (data.elements.length > 0) {
-                            const road = data.elements[0];
-                            const speedLimit = road.tags.maxspeed;
-                            const roadName = road.tags.name || 'Unnamed road';
-                            resultDiv.textContent = `Speed Limit on ${roadName}: ${speedLimit}`;
-                        } else {
-                            resultDiv.textContent = 'No speed limit data found for nearby roads.';
-                        }
-                    } catch (error) {
-                        errorDiv.textContent = 'Error fetching speed limit data. Please try again.';
-                        resultDiv.textContent = '';
-                        console.error('Error:', error);
+                    // Throttle API calls to avoid overloading Overpass API
+                    const now = Date.now();
+                    if (now - lastQueryTime > queryInterval) {
+                        lastQueryTime = now;
+                        await querySpeedLimit(latitude, longitude);
+                    } else {
+                        infoDiv.textContent = `Speed: ${Math.round(currentSpeed)} km/h | Speed Limit: ${speedLimit || 'Unknown'} km/h`;
                     }
+                    drawSpeedometer();
                 },
                 (error) => {
-                    errorDiv.textContent = 'Unable to retrieve location. Please allow location access and try again.';
-                    resultDiv.textContent = '';
+                    errorDiv.textContent = 'Unable to retrieve location. Please allow location access.';
                     console.error('Geolocation error:', error);
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 5000,
+                    maximumAge: 0
                 }
             );
         }
+
+        // Start tracking location and speed
+        startTracking();
     </script>
 </body>
 </html>
