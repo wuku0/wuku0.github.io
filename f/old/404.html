@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Page not found</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <script src="https://cdn.counter.dev/script.js" data-id="d5378282-a7bf-4de1-b215-693a25f3b961" data-utcoffset="2"></script>
+  <link href="https://fonts.googleapis.com/css?family=Lato&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="main">
+    <div class="fof">
+      <h1>Error 404</h1>
+      <p>Sorry, the page you are looking for cannot be found.</p>
+    </div>
+    <script>
+      document.addEventListener("click", function() {
+        window.location = "https://wuku0.github.io";
+      });
+    </script>
+  </div>
+</body>
+<footer>Note: subpages can be found under the /p/ folder.</footer>
+<style>
+  * {
+    transition: all 0.8s;
+  }
+
+  html {
+    height: 100%;
+  }
+
+  body {
+    font-family: 'Lato', sans-serif;
+    color: #f0f0f0;
+    margin: 0;
+    background-color: #141414;
+  }
+
+  #main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+
+  #logo {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    transition: transform 0.8s, width 0.8s, height 0.8s;
+  }
+
+  #logo.big {
+    width: 200px;
+    height: 200px;
+    transform: translate(-50%, -50%) scale(2);
+  }
+
+  .fof {
+    position: relative;
+    text-align: center;
+    padding: 40px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
+    animation: bounce 0.5s alternate infinite;
+  }
+
+  .fof h1 {
+    font-size: 50px;
+    color: #f0f0f0;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    margin: 0;
+  }
+
+  #main:after {
+    content: "";
+    background-image: url("/images/logo.png");
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 100px;
+    height: 100px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: -1;
+  }
+
+  #main:hover #logo {
+    width: 200px;
+    height: 200px;
+  }
+
+  #main:hover #logo.big {
+    transform: translate(-50%, -50%) scale(2);
+  }
+
+  @keyframes bounce {
+    from {
+      transform: scale(1);
+    }
+    to {
+      transform: scale(1.1);
+    }
+  }
+</style>
+</html>
