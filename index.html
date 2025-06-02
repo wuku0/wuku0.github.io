@@ -1,327 +1,667 @@
 <!DOCTYPE html>
-<html lang="hr">
-<noscript>Loaded in raw html, use anything you find here at your own risk.</noscript>
-
+<html lang="en">
 <head>
-    <title>wuku</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-    <link rel="apple-touch-icon" sizes="180x180" href="images/favicon_io/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="images/favicon_io/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="images/favicon_io/favicon-16x16.png">
-    <link rel="manifest" href="images/favicon_io/site.webmanifest">
-    <meta property="og:image" content="https://i.imgur.com/tHhylqe.png">
-    <meta property="og:description" content="wuku.one">
-    <meta property="og:site_name" content="wuku">
-    <meta property="og:url" content="https://wuku0.github.io">
-    <meta name="theme-color" content="#141414">
-    <meta name="description" content="roko.cc provides services.">
-<!--CDN requests-->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>wuku0</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #ece9e6, #ffffff);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: auto;
+            position: relative;
+        }
 
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet" type="text/css">
-    <script src="https://kit.fontawesome.com/f36591d8ab.js" crossorigin="anonymous"></script>
-    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css" rel="stylesheet" />
-    <script src="https://cdn.counter.dev/script.js" data-id="d5378282-a7bf-4de1-b215-693a25f3b961" data-utcoffset="2"></script>
-    <script src="script/counter.js" data-id="d5378282-a7bf-4de1-b215-693a25f3b961" data-utcoffset="2"></script>
-    <script defer src="script/script.js"></script>
-    <link href="script/style.css" rel="stylesheet">
-    <script defer src="script/fontawesome.js"></script>
-    <link href="script/fontawesomecdn.css" rel="stylesheet">
-    <link href="script/fonts.css" rel="stylesheet">
+        .landing-container {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            width: 400px;
+            max-height: 600px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: transform 0.3s ease, opacity 0.3s ease, width 0.3s ease, max-height 0.3s ease;
+            z-index: 1;
+        }
+
+        .title-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 8px 8px 0 0;
+            margin: -20px -20px 20px -20px;
+            cursor: pointer;
+        }
+
+        .traffic-lights {
+            display: flex;
+            gap: 8px;
+        }
+
+        .traffic-light {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .traffic-light:hover {
+            transform: scale(1.2);
+        }
+
+        .red { background: #ff5f56; }
+        .yellow { background: #ffbd2e; }
+        .green { background: #28c940; }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            color: #333;
+            transition: text-shadow 0.3s;
+        }
+
+        .header h1.glow {
+            text-shadow: 0 0 10px #007aff, 0 0 20px #007aff;
+        }
+
+        .header p {
+            margin: 5px 0 0;
+            color: #666;
+            font-size: 16px;
+        }
+
+        .secret-message {
+            display: none;
+            color: #007aff;
+            font-size: 14px;
+            margin-top: 10px;
+            animation: fadeIn 1s ease-in;
+        }
+
+        .section {
+            margin-bottom: 20px;
+        }
+
+        .section h2 {
+            font-size: 18px;
+            color: #333;
+            margin: 0;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .section h2:hover {
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .section h2::after {
+            content: '▼';
+            font-size: 12px;
+            transition: transform 0.3s;
+        }
+
+        .section h2.collapsed::after {
+            transform: rotate(180deg);
+        }
+
+        .social-links, .project-links {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .social-links.expanded {
+            max-height: 300px;
+            margin-top: 10px;
+        }
+
+        .project-links {
+            max-height: 0;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .project-links.expanded {
+            max-height: 200px;
+            margin-top: 10px;
+        }
+
+        .link-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 6px;
+            text-decoration: none;
+            color: #333;
+            transition: background 0.2s, transform 0.2s;
+        }
+
+        .link-item:hover {
+            background: rgba(255, 255, 255, 0.8);
+            transform: translateX(5px);
+        }
+
+        .link-item span {
+            margin-left: 10px;
+            font-size: 16px;
+        }
+
+        .project-item {
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 6px;
+            margin-bottom: 10px;
+            transition: background 0.2s, transform 0.2s;
+            cursor: pointer;
+        }
+
+        .project-item:hover {
+            background: rgba(255, 255, 255, 0.8);
+            transform: translateX(5px);
+        }
+
+        .project-item a {
+            text-decoration: none;
+            color: #333;
+            pointer-events: none;
+        }
+
+        .project-item h3 {
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .project-item p {
+            margin: 5px 0 0;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .landing-container::-webkit-scrollbar,
+        .project-links::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .landing-container::-webkit-scrollbar-track,
+        .project-links::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .landing-container::-webkit-scrollbar-thumb,
+        .project-links::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+        }
+
+        .landing-container::-webkit-scrollbar-thumb:hover,
+        .project-links::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(0.8); }
+        }
+
+        @keyframes closeAnimation {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(0.5); opacity: 0; }
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: red;
+            top: -10px;
+            animation: fall 2s linear forwards;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(120vh) rotate(720deg);
+                opacity: 0;
+                display: none;
+            }
+        }
+
+        .project-tab {
+            position: fixed;
+            width: 400px;
+            max-height: 600px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .project-tab.fullscreen {
+            width: 100vw !important;
+            height: 100vh !important;
+            max-height: none !important;
+            top: 0 !important;
+            left: 0 !important;
+            transform: none !important;
+            border-radius: 0 !important;
+            margin: 0 !important;
+        }
+
+        .project-tab-titlebar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 8px 8px 0 0;
+            cursor: move;
+            user-select: none;
+        }
+
+        .project-tab-title {
+            margin: 0;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .project-tab-content {
+            flex: 1;
+            border: none;
+            border-radius: 0 0 12px 12px;
+            width: 100%;
+            height: 100%;
+        }
+
+        .project-tab.fullscreen .project-tab-content {
+            border-radius: 0 !important;
+        }
+    </style>
 </head>
 <body>
+    <div class="landing-container" id="landing-container">
+        <div class="title-bar" id="title-bar">
+            <div class="traffic-lights">
+                <div class="traffic-light red" id="red-button"></div>
+                <div class="traffic-light yellow" id="yellow-button"></div>
+                <div class="traffic-light green" id="green-button"></div>
+            </div>
+            <h2 style="margin: 0; font-size: 16px;"></h2>
+            <div style="width: 36px;"></div>
+        </div>
+        <div class="header" id="header">
+            <h1 id="header-name">Adrian S</h1>
+            <p>:)</p>
+            <p class="secret-message" id="secret-message">Grüß dich</p>
+        </div>
+        <div class="section">
+            <h2 id="socials-toggle" class="collapsed">Socials</h2>
+            <div class="social-links">
+                <a href="https://github.com/wuku0" target="_blank" class="link-item">
+                    <span role="img" aria-label="GitHub">🐙</span>
+                    <span>GitHub</span>
+                </a>
+                <a href="https://s.team/p/gmmr-kgcg" target="_blank" class="link-item">
+                    <span role="img" aria-label="Steam">🎮</span>
+                    <span>Steam</span>
+                </a>
+                <a href="https://discord.com/users/708966895642214473" target="_blank" class="link-item">
+                    <span role="img" aria-label="Discord">💬</span>
+                    <span>Discord</span>
+                </a>
+                <a href="https://t.me/" target="_blank" class="link-item">
+                    <span role="img" aria-label="Telegram">📬</span>
+                    <span>Telegram</span>
+                </a>
+                <a href="https://open.spotify.com/intl-de/artist/1L2ziVovaq55g8zKkGDtxN?si=-0r21DxWQ-WtWLDL661dLQ" target="_blank" class="link-item">
+                    <span role="img" aria-label="Spotify">🎵</span>
+                    <span>Spotify</span>
+                </a>
+                <a href="https://wuku0.github.io/f/blog" target="_blank" class="link-item">
+                    <span role="img" aria-label="Blog">📝</span>
+                    <span>Blog</span>
+                </a>
+            </div>
+        </div>
+        <div class="section">
+            <h2 id="projects-toggle" class="collapsed">Projects</h2>
+            <div class="project-links">
+                <div class="project-item" data-url="f/search.html">
+                    <h3>Search</h3>
+                    <p>Startpage to browse the internet with differnt search engines.</p>
+                </div>
+                    <div class="project-item" data-url="f/imgur/index.html">
+                    <h3>Imgur</h3>
+                    <p>Get random pictures from the worldwideweb.</p>
+                </div>
+                <div class="project-item" data-url="f/speed.html">
+                    <h3>Speedometer</h3>
+                    <p>Free to use speedometer with speed camera data.</p>
+                </div>
+                <div class="project-item" data-url="f/password.html">
+                    <h3>Password</h3>
+                    <p>Password Generator tool.</p>
+                </div>
+                <div class="project-item" data-url="f/stopwatch.html">
+                    <h3>Stopwatch</h3>
+                    <p>Basic Stopwatch.</p>
+                </div>
+                <div class="project-item" data-url="f/removebg.html">
+                    <h3>Remove Background</h3>
+                    <p>Free Image Background Removing Tool.</p>
+                </div>
+                    <div class="project-item" data-url="f/noted/index.html">
+                    <h3>Noted</h3>
+                    <p>Free Note taking app with saving.</p>
+                </div>
+                <div class="project-item" data-url="f/mp3.html">
+                    <h3>MP3 Player</h3>
+                    <p>Rename and play Song list in browser.</p>
+                    </div>
+                    <div class="project-item" data-url="f/capital/capital">
+                    <h3>World Capital Quiz</h3>
+                    <p>Quiz app with all Capital cities.</p>
+                </div>
+                    <div class="project-item" data-url="f/flag/flag">
+                    <h3>World Flag Quiz</h3>
+                    <p>Quiz app with all CountryFlags.</p>
+                </div>
+                    <div class="project-item" data-url="f/gio/index.html">
+                    <h3>BlockPuzzle</h3>
+                    <p>Based on the mobile game BlockBlast.</p>
+                </div>
+                    <div class="project-item" data-url="f/office/index.html">
+                    <h3>Office</h3>
+                    <p>Office C2R download link list.</p>
+                </div>
+                    <div class="project-item" data-url="f/ocr/index.html">
+                    <h3>OCR</h3>
+                    <p>Optic Character Recognition.</p>
+                </div>
+                    <div class="project-item" data-url="f/old/index.html">
+                    <h3>Old</h3>
+                    <p>Old wuku0 landing page</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <audio id="whoosh-sound" preload="auto">
+        <source src="data:audio/mp3;base64,/+MYxAAAAANIAAAAAExBTUUzLjk4LjIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" type="audio/mpeg">
+    </audio>
+    <audio id="pop-sound" preload="auto">
+        <source src="data:audio/mp3;base64,/+MYxAAAAANIAAAAAExBTUUzLjk4LjIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" type="audio/mpeg">
+    </audio>
+    <audio id="click-sound" preload="auto">
+        <source src="data:audio/mp3;base64,/+MYxAAAAANIAAAAAExBTUUzLjk4LjIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" type="audio/mpeg">
+    </audio>
+    <audio id="ding-sound" preload="auto">
+        <source src="data:audio/mp3;base64,/+MYxAAAAANIAAAAAExBTUUzLjk4LjIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" type="audio/mpeg">
+    </audio>
 
-<!-- Create a navbar with some links -->
-<div class="navbar" id="navbar">
-  <a href="#about" title="About"><i class="fa-solid fa-hashtag"></i></a>
-  <a href="#home" title="Home"><i class="fa-solid fa-house"></i></a>
-  <a href="#project" title="Projects"><i class="fa-solid fa-folder"></i></a>
-</div>
-<!-- Add some content below the navbar -->
-<a class="anchor" id="home"></a>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
+    <script>
+        const landingContainer = document.getElementById('landing-container');
+        const redButton = document.getElementById('red-button');
+        const yellowButton = document.getElementById('yellow-button');
+        const greenButton = document.getElementById('green-button');
+        const titleBar = document.getElementById('title-bar');
+        const headerName = document.getElementById('header-name');
+        const secretMessage = document.getElementById('secret-message');
+        const whooshSound = document.getElementById('whoosh-sound');
+        const popSound = document.getElementById('pop-sound');
+        const clickSound = document.getElementById('click-sound');
+        const dingSound = document.getElementById('ding-sound');
+        const socialsToggle = document.getElementById('socials-toggle');
+        const projectsToggle = document.getElementById('projects-toggle');
+        const socialsContent = document.querySelector('.social-links');
+        const projectsContent = document.querySelector('.project-links');
 
-<div class="home" style="padding:15px 15px 25px;font-size:30px">
-  <p><b><div id="wuku">
-    <p>wuku</b></p>
-    <br>
-</div>
-<br>
-<br>
+        let isFullScreen = false;
+        let keySequence = '';
+        let lastClickTime = 0;
+        let zIndexCounter = 2; // Start above landing-container z-index (1)
 
-<div class="container">
-    <a href="https://github.com/wuku0" target="_blank" class="btn btn-primary btn-lg" style="background-color:#24292E"><i class="fab fa-github-alt"></i> GitHub</a>
-    <a href="https://s.team/p/gmmr-kgcg" target="_blank" class="btn btn-primary btn-lg" style="background-color:#171A21"><i class="fab fa-steam"></i> Steam</a>
-    <a href="https://discord.com/users/708966895642214473" target="_blank" class="btn btn-primary btn-lg" style="background-color:#6176c6"><i class="fab fa-discord"></i> Discord</a>
-    <a href="https://tttt.me" target="_blank" class="btn btn-primary btn-lg" style="background-color:#105da9"><i class="fab fa-telegram"></i> Telegram</a>
-    <a href="https://sptfy.com/wuku" target="_blank" class="btn btn-primary btn-lg" style="background-color:#119449"><i class="fab fa-spotify"></i> Spotify</a>
-    <a href="https://wuku0.github.io/p/rss" target="_blank" class="btn btn-primary btn-lg" style="background-color:#fe7501"><i class="fa-solid fa-rss"></i> Blog</a>
-  </div>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<a class="anchor" id="about"></a>
-<br>
-<br>
-<br>
-<center>
-<div>
+        socialsToggle.addEventListener('click', () => {
+            socialsContent.classList.toggle('expanded');
+            socialsToggle.classList.toggle('collapsed');
+        });
 
-<h1><element class="h1">    <p>A</p><img src="images/hr.sv" width="160" alt=""> </h1>
-  <div class="richme">Currently In-game<p id="result"></p></div>
-    <element class="h1"><p></p><br>
+        projectsToggle.addEventListener('click', () => {
+            projectsContent.classList.toggle('expanded');
+            projectsToggle.classList.toggle('collapsed');
+        });
 
-</div></element>
-<div class="player-container">
-    <audio id="audio-player"></audio>
-    <div class="controls">
-      <button id="play-button"><i class="fa-solid fa-play"></i></button>
-      <button id="shuffle-button"><i class="fa-solid fa-shuffle"></i></button>
-    </div>
-  </div>
-  <br>
-  <br>
-  <br>
-  <a class="anchor" id="project"></a>
-  <br>
-  <br>
-  <br>
+        redButton.addEventListener('click', () => {
+            whooshSound.play();
+            landingContainer.style.opacity = '0';
+            setTimeout(() => {
+                landingContainer.style.opacity = '1';
+            }, 500);
+        });
 
-<h2><element class="h2"><i class="fa-solid fa-folder-open"></i> Projects  </element></h2>
-<div class="projects">
-    <div class="box">
-    <img src="images/cted.jpg" alt="Corrupt File"/>
-      <h2>Corrupt File</h2>
-      <p>Destroys any uploaded file to a point you can't imagine.</p>
-      <a href="https://raw.githubusercontent.com/wuku0/wuku0.github.io/main/p/corrupt.html" title="Source" class="btn"><i class="fab fa-github"></i></a>
-      <a href="https://wuku0.github.io/p/corrupt" title="Website" class="btn"><i class="fa fa-globe"></i></a>
-    </div>
-    <div class="box">
-    <img src="images/" alt="BG Remover"/>
-      <h2>Image Background Remover</h2>
-      <p>Tool that helps in reliably removing an images background</p>
-      <a href="https://wuku0.github.io/p/removebg" title="Website" class="btn"><i class="fa fa-globe"></i></a>
-    </div>
-    <div class="box">
-    <img src="images/hoot.jpg" alt="Kahoot cheat"/>
-      <h2>Kahoot</h2>
-      <p>Find Kahoot quiz answers instantly or add bots to your game.</p>
-      <a href="https://github.com/wuku0/kacheese" title="Source" class="btn"><i class="fab fa-github"></i></a>
-      <a href="https://wuku0.github.io/p/kahoot" title="Website" class="btn"><i class="fa fa-globe"></i></a>
-    </div>
-    <div class="box">
-    <img src="images/imgur.png" alt="Random Imgur Image"/>
-      <h2>Random Imgur</h2>
-      <p>Parces Imgur and finds random Imgur images.</p>
-      <a href="https://raw.githubusercontent.com/wuku0/wuku0.github.io/main/p/imgur/index.html" title="Source" class="btn"><i class="fab fa-github"></i></a>
-      <a href="https://wuku0.github.io/p/imgur" title="Website" class="btn"><i class="fa fa-globe"></i></a>
-    </div>
-    <div class="box">
-    <img src="images/bloc.jpg" alt="Bloc"/>
-      <h2>BlastBlock</h2>
-      <p>Well known BlastBlock mobile game</p>
-      <a href="https://wuku0.github.io/p/gio" title="Website" class="btn"><i class="fa fa-globe"></i></a>
-    </div>
-    <div class="box">
-    <img src="images/proxy.png" alt="Search Proxy"/>
-      <h2>Search Proxy</h2>
-      <p>Search Proxy, privacy-focused.</p>
-      <a href="https://raw.githubusercontent.com/wuku0/wuku0.github.io/main/p/proxy/index.html" title="Source" class="btn"><i class="fab fa-github"></i></a>
-      <a href="https://wuku0.github.io/p/proxy" title="Website" class="btn"><i class="fa fa-globe"></i></a>
-    </div>
-    <div class="box">
-    <img src="pp" alt="World Flag Quiz"/>
-        <h2>Deutsche Bundesländer Umrisse Quiz</h2></h2>
-        <p>Can you match the proper Outline to the State?</p>
-        <a href="https://github.com/wuku0/" title="Source" class="btn"><i class="fab fa-github"></i></a>
-        <a href="https://wuku0.github.io/p/bl-quiz" title="Website" class="btn"><i class="fa fa-globe"></i></a>
-    </div>
-    <div class="box">
-    <img src="pp" alt="Cook"/>
-        <h2>CookBot</h2></h2>
-        <p>Input ingredients and get receipe</p>
-        <a href="https://wuku0.github.io/p/cook" title="Website" class="btn"><i class="fa fa-globe"></i></a>
-    </div>
-    <div class="box">
-    <img src="pp" alt="World Flag Quiz"/>
-        <h2>Deutsche Landesflaggen Quiz</h2>
-        <p>Can you correctly assign each states flag?</p>
-        <a href="https://github.com/wuku0/" title="Source" class="btn"><i class="fab fa-github"></i></a>
-        <a href="https://wuku0.github.io/p/bl-flaggen-quiz" title="Website" class="btn"><i class="fa fa-globe"></i></a>
-    </div>
-    <div class="box">
-    <img src="images/until.jpg" alt="Until"/>
-      <h2>Until</h2>
-      <p>Counts down to a date, which you can share.</p>
-      <a href="https://raw.githubusercontent.com/wuku0/wuku0.github.io/main/p/until.html" title="Source" class="btn"><i class="fab fa-github"></i></a>
-      <a href="https://wuku0.github.io/p/until" title="Website" class="btn"><i class="fa fa-globe"></i></a>
-    </div>
-    <div class="box">
-    <img src="images/ocr.jpeg" alt="Optic Character Recognition"/>
-      <h2>OCR</h2>
-      <p>Optic Character Recognition. Upload Image, get text.</p>
-      <a href="https://raw.githubusercontent.com/wuku0/wuku0.github.io/main/p/ocr/index.html" title="Source" class="btn"><i class="fab fa-github"></i></a>
-      <a href="https://wuku0.github.io/p/ocr" title="Website" class="btn"><i class="fa fa-globe"></i></a>
-    </div>
-    <div class="box">
-    <img src="images/noted.png" alt="Note Taking web-app"/>
-      <h2>Noted</h2>
-      <p>Saves notes in local browser storage, with further functionality.</p>
-      <a href="https://raw.githubusercontent.com/wuku0/wuku0.github.io/main/p/noted/index.html" title="Source" class="btn"><i class="fab fa-github"></i></a>
-      <a href="https://wuku0.github.io/p/noted" title="Website" class="btn"><i class="fa fa-globe"></i></a>
-    </div>
-    <div class="box">
-    <img src="images/ytf.png" alt="YT Thumbnail Finder"/>
-      <h2>YTF</h2>
-      <p>Finds the Thumbnail of a YouTube video from URL</p>
-      <a href="https://wuku0.github.io/p/ytf" title="Website" class="btn"><i class="fa fa-globe"></i></a>
-    </div>
-    <div class="box">
-    <img src="p/capital/android-chrome-512x512.png" alt="World Capital Quiz"/>
-        <h2>World Capital Quiz</h2>
-        <p>Interactive quiz tests your knowledge of country capitals.</p>
-        <a href="https://raw.githubusercontent.com/wuku0/wuku0.github.io/main/p/capital/capital.html" title="Source" class="btn"><i class="fab fa-github"></i></a>
-        <a href="https://wuku0.github.io/p/capital" title="Website" class="btn"><i class="fa fa-globe"></i></a>
-    </div>
-    <div class="box">
-    <img src="p/flag/android-chrome-512x512.png" alt="World Flag Quiz"/>
-        <h2>World Flag Quiz</h2>
-        <p>Interactive quiz tests your knowledge of country flags.</p>
-        <a href="https://github.com/wuku0/" title="Source" class="btn"><i class="fab fa-github"></i></a>
-        <a href="https://wuku0.github.io/p/flag" title="Website" class="btn"><i class="fa fa-globe"></i></a>
-    </div>
-    <div class="box">
-    <img src="images/MH.ico" alt="Moorhuhn"/>
-        <h2>Moorhuhn</h2>
-        <p>Shoot poultry and get a new highscore. Play in any browser.</p>
-        <a href="https://github.com/wuku0/moorhuhn" title="Source" class="btn"><i class="fab fa-github"></i></a>
-        <a href="https://wuku0.github.io/p/moorhuhn" title="Website" class="btn"><i class="fa fa-globe"></i></a>
-    </div>
-    <div class="box">
-    <img src="images/sleeks.svg" alt="Sleek Search"/>
-        <h2>Firefox extension</h2>
-        <p>A search box popup to find cheap game prices.</p>
-        <a href="https://addons.mozilla.org/de/firefox/addon/sleeksearch/" title="Website" class="btn"><i class="fa fa-globe"></i></a>
-    </div>
-    <div class="box">
-    <img src="images/office.jpg" alt="Office C2R"/>
-        <h2>Office</h2>
-        <p>Find Microsoft Office download links.</p>
-        <a href="https://github.com/wuku0/" title="Source" class="btn"><i class="fab fa-github"></i></a>
-        <a href="https://wuku0.github.io/p/office" title="Website" class="btn"><i class="fa fa-globe"></i></a>
-    </div>
-    <div class="box">
-    <img src="images/cyrillic.jpg" alt="Cyrillic quiz"/>
-        <h2>Cyrillic</h2>
-        <p>Quiz to help learn cyrillic.</p>
-        <a href="https://raw.githubusercontent.com/wuku0/wuku0.github.io/main/p/cyrillic.html" title="Source" class="btn"><i class="fab fa-github"></i></a>
-        <a href="https://wuku0.github.io/p/cyrillic" title="Website" class="btn"><i class="fa fa-globe"></i></a>
-    </div>
-    <div class="box">
-    <img src="images/rcfc.png" alt="Remove Comments From Code"/>
-        <h2>RCFC</h2>
-        <p>Removes comments from code, autodetects language.</p>
-        <a href="https://raw.githubusercontent.com/wuku0/wuku0.github.io/main/p/rcfc.html" title="Source" class="btn"><i class="fab fa-github"></i></a>
-        <a href="https://wuku0.github.io/p/rcfc" title="Website" class="btn"><i class="fa fa-globe"></i></a>
-    </div>
-    <div class="box">
-    <img src="images/calc.png" alt="Calculator"/>
-        <h2>Calculator</h2>
-        <p>Python Calculator app.</p>
-        <a href="https://github.com/wuku0/calc" title="Source" class="btn"><i class="fab fa-github"></i></a>
-        <a href="https://wuku0.github.io/p/calc" title="Website" class="btn"><i class="fa fa-globe"></i></a>
-    </div>
-    <div class="box">
-    <img src="images/steamrp.png" alt="Steam Rich Presence"/>
-        <h2>SteamRP</h2>
-        <p>Steam Rich Presence in js.</p>
-        <a href="https://github.com/wuku0/steam-rich-presence" title="Source" class="btn"><i class="fab fa-github"></i></a>
-        <a href="https://wuku0.github.io/#about" title="Website" class="btn"><i class="fa fa-globe"></i></a>
-    </div>
-    <div class="box">
-    <img src="images/bloodpoint.png" alt="Auto-Bloodweb-Level"/>
-        <h2>Bloodweb</h2>
-        <p>Automatically levels the Bloodweb</p>
-        <a href="https://github.com/wuku0/bloodweb" title="Source" class="btn"><i class="fab fa-github"></i></a>
-    </div>
-    <div class="box">
-    <img src="images/" alt="NOEdge"/>
-        <h2>NoEdge</h2>
-        <p>Removes MSEdge and WebView from Windows</p>
-        <a href="https://github.com/wuku0/NOedge" title="Source" class="btn"><i class="fab fa-github"></i></a>
-    </div>
-    <div class="box">
-    <img src="images/" alt="cyconv"/>
-        <h2>Cyrillic converter</h2>
-        <p>Converts from latin to cyrillic chars</p>
-        <a href="https://wuku0.github.io/p/cyconvert" title="Website" class="btn"><i class="fa fa-globe"></i></a>
-    </div>
-    <div class="box">
-    <img src="images/" alt="randLoc"/>
-        <h2>Random location</h2>
-        <p>Lets you get a random location in European cities</p>
-        <a href="https://wuku0.github.io/p/random-location" title="Website" class="btn"><i class="fa fa-globe"></i></a>
-    </div>
-    <div class="box">
-    <img src="images/" alt="PW-GEN"/>
-        <h2>Password Generator</h2>
-        <p>PW-Generator</p>
-        <a href="https://wuku0.github.io/p/pw" title="Website" class="btn"><i class="fa fa-globe"></i></a>
-    </div>
-  </div>
-  <div class="box">
-    <img src="images/" alt="Odmor"/>
-        <h2>Next Vacation</h2>
-        <p>Displays countdown to next vacation</p>
-        <a href="https://wuku0.github.io/p/odmor" title="Website" class="btn"><i class="fa fa-globe"></i></a>
-    </div>
-  </div>
-  <div class="box">
-    <img src="images/" alt="Stopwatch"/>
-        <h2>Stopwatch</h2>
-        <p>Timed frame</p>
-        <a href="https://wuku0.github.io/p/stop" title="Website" class="btn"><i class="fa fa-globe"></i></a>
-    </div>
-  </div>
+        yellowButton.addEventListener('click', () => {
+            popSound.play();
+            landingContainer.style.animation = 'bounce 0.3s ease';
+            landingContainer.style.transform = 'scale(0.8)';
+            setTimeout(() => {
+                landingContainer.style.animation = '';
+                landingContainer.style.transform = 'scale(1)';
+            }, 300);
+        });
 
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
+        greenButton.addEventListener('click', () => {
+            clickSound.play();
+            if (isFullScreen) {
+                landingContainer.style.width = '400px';
+                landingContainer.style.maxHeight = '600px';
+                landingContainer.style.position = 'relative';
+                landingContainer.style.top = 'auto';
+                landingContainer.style.left = 'auto';
+                landingContainer.style.transform = 'none';
+            } else {
+                landingContainer.style.width = '90vw';
+                landingContainer.style.maxHeight = '90vh';
+                landingContainer.style.position = 'absolute';
+                landingContainer.style.top = '50%';
+                landingContainer.style.left = '50%';
+                landingContainer.style.transform = 'translate(-50%, -50%)';
+                landingContainer.style.zIndex = zIndexCounter++;
+            }
+            isFullScreen = !isFullScreen;
+        });
 
-<footer>
-<element class="footer">
-    &copy; Running since 6.Nov.2022 <i class="fa-solid fa-arrow-right"></i> <span id="date"></span></p>
-    <center>
-    <br>
-    <iframe src="images/cert.gif" width="75" height="75" frameborder="1"></iframe>
-<div class="quote-container">
-  <p id="quote">Nije sretan k'o puno ima <br>sretan je onaj tko malo treba</p>
-</div>        
+        titleBar.addEventListener('click', () => {
+            const now = Date.now();
+            if (now - lastClickTime < 300) {
+                launchConfetti();
+            }
+            lastClickTime = now;
+        });
 
+        function launchConfetti() {
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.background = `hsl(${Math.random() * 360}, 70%, 50%)`;
+                confetti.style.animationDuration = (Math.random() * 1 + 1) + 's';
+                document.body.appendChild(confetti);
+                confetti.addEventListener('animationend', () => {
+                    confetti.remove();
+                });
+            }
+        }
 
-</element>
-</footer>
+        let hoverTimeout;
+        headerName.addEventListener('mouseenter', () => {
+            hoverTimeout = setTimeout(() => {
+                headerName.classList.add('glow');
+                dingSound.play();
+                setTimeout(() => headerName.classList.remove('glow'), 1000);
+            }, 3000);
+        });
+        headerName.addEventListener('mouseleave', () => {
+            clearTimeout(hoverTimeout);
+            headerName.classList.remove('glow');
+        });
+
+        document.addEventListener('keydown', (e) => {
+            keySequence += e.key.toUpperCase();
+            if (keySequence.includes('EASTER')) {
+                secretMessage.style.display = 'block';
+                dingSound.play();
+                setTimeout(() => {
+                    secretMessage.style.display = 'none';
+                    keySequence = '';
+                }, 3000);
+            }
+            if (keySequence.length > 10) {
+                keySequence = keySequence.slice(-10);
+            }
+        });
+
+        const projectItems = document.querySelectorAll('.project-item');
+        projectItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const url = item.getAttribute('data-url');
+                const title = item.querySelector('h3').textContent;
+                openProjectTab(url, title);
+            });
+        });
+
+        function openProjectTab(url, title) {
+            const tab = document.createElement('div');
+            tab.className = 'project-tab';
+            tab.style.zIndex = zIndexCounter++;
+            tab.innerHTML = `
+                <div class="project-tab-titlebar" draggable="true">
+                    <div class="traffic-lights">
+                        <div class="traffic-light red project-tab-close"></div>
+                        <div class="traffic-light yellow project-tab-minimize"></div>
+                        <div class="traffic-light green project-tab-fullscreen"></div>
+                    </div>
+                    <h2 class="project-tab-title">${title}</h2>
+                    <div style="width: 36px;"></div>
+                </div>
+                <iframe class="project-tab-content" src="${url}"></iframe>
+            `;
+            document.body.appendChild(tab);
+
+            let isDragging = false;
+            let offsetX = 0;
+            let offsetY = 0;
+            let isTabFullScreen = false;
+            let originalPosition = null;
+            const titleBar = tab.querySelector('.project-tab-titlebar');
+
+            // Bring tab to front on click
+            tab.addEventListener('mousedown', () => {
+                tab.style.zIndex = zIndexCounter++;
+            });
+
+            titleBar.addEventListener('mousedown', (e) => {
+                if (e.target.classList.contains('traffic-light')) return;
+                const rect = tab.getBoundingClientRect();
+                offsetX = e.clientX - rect.left;
+                offsetY = e.clientY - rect.top;
+                isDragging = true;
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging && !isTabFullScreen) {
+                    const newX = e.clientX - offsetX;
+                    const newY = e.clientY - offsetY;
+                    tab.style.left = `${newX}px`;
+                    tab.style.top = `${newY}px`;
+                    tab.style.transform = 'none';
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+
+            const closeButton = tab.querySelector('.project-tab-close');
+            closeButton.addEventListener('click', () => {
+                tab.remove();
+            });
+
+            const minimizeButton = tab.querySelector('.project-tab-minimize');
+            minimizeButton.addEventListener('click', () => {
+                popSound.play();
+                tab.style.animation = 'closeAnimation 0.3s ease forwards';
+                setTimeout(() => {
+                    tab.remove();
+                }, 300);
+            });
+
+            const fullscreenButton = tab.querySelector('.project-tab-fullscreen');
+            fullscreenButton.addEventListener('click', () => {
+                clickSound.play();
+                if (isTabFullScreen) {
+                    tab.classList.remove('fullscreen');
+                    tab.style.width = originalPosition.width;
+                    tab.style.maxHeight = originalPosition.maxHeight;
+                    tab.style.position = 'fixed';
+                    tab.style.left = originalPosition.left;
+                    tab.style.top = originalPosition.top;
+                    tab.style.transform = 'none';
+                } else {
+                    originalPosition = {
+                        width: tab.style.width,
+                        maxHeight: tab.style.maxHeight,
+                        left: tab.style.left,
+                        top: tab.style.top
+                    };
+                    tab.classList.add('fullscreen');
+                    tab.style.zIndex = zIndexCounter++;
+                }
+                isTabFullScreen = !isTabFullScreen;
+            });
+
+            const initialX = window.innerWidth / 2 - tab.offsetWidth / 2 + (zIndexCounter - 2) * 20;
+            const initialY = window.innerHeight / 2 - tab.offsetHeight / 2 + (zIndexCounter - 2) * 20;
+            tab.style.left = `${initialX}px`;
+            tab.style.top = `${initialY}px`;
+        }
+    </script>
+</body>
+</html>
+
