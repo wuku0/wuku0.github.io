@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>macOS Stopwatch</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100%;
+            margin: 0;
+            background: #f5f5f7;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            flex: 1;
+            overflow-y: auto;
+        }
+        h1 {
+            font-size: 24px;
+            color: #333;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+        .timer-display {
+            font-size: 48px;
+            font-weight: 600;
+            color: #333;
+            text-align: center;
+            margin: 20px 0;
+            font-family: monospace;
+            transition: text-shadow 0.3s;
+            width: 300px;
+            max-width: 90%;
+        }
+        .timer-display.glow {
+            text-shadow: 0 0 10px #007aff, 0 0 20px #007aff;
+        }
+        .secret-message {
+            display: none;
+            color: #007aff;
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 10px;
+            animation: fadeIn 1s ease-in;
+            width: 300px;
+            max-width: 90%;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            width: 300px;
+            max-width: 90%;
+        }
+        .control-btn {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.5);
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            color: #333;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+            flex: 1;
+        }
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.8);
+            transform: translateY(-2px);
+        }
+        .control-btn:active {
+            transform: translateY(0);
+        }
+        .control-btn:disabled {
+            background: rgba(255, 255, 255, 0.3);
+            cursor: not-allowed;
+        }
+        .laps {
+            max-height: 200px;
+            overflow-y: auto;
+            width: 300px;
+            max-width: 90%;
+        }
+        .lap-item {
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 16px;
+            color: #333;
+        }
+        .laps::-webkit-scrollbar {
+            width: 8px;
+        }
+        .laps::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .laps::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+        }
+        .laps::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.5);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @media screen and (max-width: 480px) {
+            h1 {
+                font-size: 20px;
+                margin-bottom: 12px;
+            }
+            .timer-display {
+                font-size: 36px;
+                margin: 10px 0;
+            }
+            .controls, .laps, .secret-message {
+                width: 250px;
+            }
+            .control-btn {
+                padding: 8px 15px;
+                font-size: 14px;
+            }
+            .lap-item {
+                font-size: 14px;
+                padding: 8px;
+            }
+            .secret-message {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Stopwatch</h1>
+    <p class="secret-message" id="secret-message">Wow, you found the Easter egg! ✨</p>
+    <div class="timer-display" id="timer-display">00:00:00</div>
+    <div class="controls">
+        <button class="control-btn" id="start-stop-btn">Start</button>
+        <button class="control-btn" id="lap-btn" disabled>Lap</button>
+        <button class="control-btn" id="reset-btn" disabled>Reset</button>
+    </div>
+    <div class="laps" id="laps"></div>
+
+    <script>
+        const timerDisplay = document.getElementById('timer-display');
+        const secretMessage = document.getElementById('secret-message');
+        const startStopBtn = document.getElementById('start-stop-btn');
+        const lapBtn = document.getElementById('lap-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const lapsContainer = document.getElementById('laps');
+
+        let isRunning = false;
+        let startTime = 0;
+        let elapsedTime = 0;
+        let timerInterval = null;
+        let lapCount = 0;
+        let keySequence = '';
+
+        // Format time as MM:SS:MS
+        function formatTime(ms) {
+            const minutes = Math.floor(ms / 60000).toString().padStart(2, '0');
+            const seconds = Math.floor((ms % 60000) / 1000).toString().padStart(2, '0');
+            const milliseconds = Math.floor((ms % 1000) / 10).toString().padStart(2, '0');
+            return `${minutes}:${seconds}:${milliseconds}`;
+        }
+
+        // Update timer display
+        function updateTimer() {
+            const currentTime = Date.now();
+            elapsedTime = currentTime - startTime;
+            timerDisplay.textContent = formatTime(elapsedTime);
+        }
+
+        // Start/Stop button
+        startStopBtn.addEventListener('click', () => {
+            if (!isRunning) {
+                startTime = Date.now() - elapsedTime;
+                timerInterval = setInterval(updateTimer, 10);
+                startStopBtn.textContent = 'Stop';
+                lapBtn.disabled = false;
+                resetBtn.disabled = false;
+                isRunning = true;
+            } else {
+                clearInterval(timerInterval);
+                startStopBtn.textContent = 'Start';
+                lapBtn.disabled = true;
+                isRunning = false;
+            }
+        });
+
+        // Lap button
+        lapBtn.addEventListener('click', () => {
+            lapCount++;
+            const lapTime = formatTime(elapsedTime);
+            const lapItem = document.createElement('div');
+            lapItem.className = 'lap-item';
+            lapItem.textContent = `Lap ${lapCount}: ${lapTime}`;
+            lapsContainer.prepend(lapItem);
+        });
+
+        // Reset button
+        resetBtn.addEventListener('click', () => {
+            clearInterval(timerInterval);
+            isRunning = false;
+            elapsedTime = 0;
+            lapCount = 0;
+            timerDisplay.textContent = '00:00:00';
+            startStopBtn.textContent = 'Start';
+            lapBtn.disabled = true;
+            resetBtn.disabled = true;
+            lapsContainer.innerHTML = '';
+        });
+
+        // Timer hover: Glow effect
+        let hoverTimeout;
+        timerDisplay.addEventListener('mouseenter', () => {
+            hoverTimeout = setTimeout(() => {
+                timerDisplay.classList.add('glow');
+                setTimeout(() => timerDisplay.classList.remove('glow'), 1000);
+            }, 3000);
+        });
+        timerDisplay.addEventListener('mouseleave', () => {
+            clearTimeout(hoverTimeout);
+            timerDisplay.classList.remove('glow');
+        });
+
+        // Secret message: Type "EASTER"
+        document.addEventListener('keydown', (e) => {
+            keySequence += e.key.toUpperCase();
+            if (keySequence.includes('EASTER')) {
+                secretMessage.style.display = 'block';
+                setTimeout(() => {
+                    secretMessage.style.display = 'none';
+                    keySequence = '';
+                }, 3000);
+            }
+            if (keySequence.length > 10) {
+                keySequence = keySequence.slice(-10);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>macOS Speedometer</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+    }
+
+    body {
+      margin: 0;
+      height: 100vh;
+      background: linear-gradient(145deg, #1e1e1e, #2a2a2a);
+      font-family: -apple-system, BlinkMacSystemFont, "San Francisco", "Segoe UI", Roboto, sans-serif;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    canvas {
+      background: radial-gradient(ellipse at center, #f5f5f5 0%, #e0e0e0 100%);
+      border-radius: 50%;
+      box-shadow: inset 0 4px 8px rgba(0,0,0,0.1), 0 6px 20px rgba(0,0,0,0.25);
+    }
+
+    #warning {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: 600;
+      padding: 10px 20px;
+      border-radius: 20px;
+      display: inline-block;
+      transition: 0.3s;
+    }
+
+    #warning.over-limit {
+      background: rgba(255, 80, 80, 0.15);
+      color: #ff4d4d;
+      border: 1px solid #ff4d4d;
+    }
+
+    #warning.camera {
+      background: rgba(255, 222, 89, 0.15);
+      color: #ffdd55;
+      border: 1px solid #ffdd55;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="speedometer" width="300" height="300"></canvas>
+  <div id="warning"></div>
+
+  <script>
+    const canvas = document.getElementById("speedometer");
+    const ctx = canvas.getContext("2d");
+    const warning = document.getElementById("warning");
+
+    let currentSpeed = 0;
+    let displaySpeed = 0;
+    let speedLimit = null;
+    let nearbyCamera = false;
+    let lastQuery = 0;
+    const queryInterval = 15000;
+    const cameraWarningDistance = 500;
+
+    function drawGauge() {
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const radius = 130;
+      const maxSpeed = 180;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Outer arc
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0.75 * Math.PI, 2.25 * Math.PI);
+      ctx.lineWidth = 10;
+      ctx.strokeStyle = "#aaa";
+      ctx.stroke();
+
+      // Tick marks
+      ctx.font = "12px -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.fillStyle = "#333";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      for (let i = 0; i <= maxSpeed; i += 20) {
+        const angle = (i / maxSpeed) * 1.5 * Math.PI + 0.75 * Math.PI;
+        const x = centerX + (radius - 20) * Math.cos(angle);
+        const y = centerY + (radius - 20) * Math.sin(angle);
+        ctx.fillText(i.toString(), x, y);
+      }
+
+      // Needle
+      const speedAngle = (Math.min(displaySpeed, maxSpeed) / maxSpeed) * 1.5 * Math.PI + 0.75 * Math.PI;
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.lineTo(centerX + (radius - 30) * Math.cos(speedAngle), centerY + (radius - 30) * Math.sin(speedAngle));
+      ctx.strokeStyle = (speedLimit && displaySpeed > speedLimit) ? "red" : "#111";
+      ctx.lineWidth = 4;
+      ctx.stroke();
+
+      // Speed text
+      ctx.font = "bold 28px -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.fillStyle = "#111";
+      ctx.textAlign = "center";
+      ctx.fillText(`${Math.round(displaySpeed)} km/h`, centerX, centerY + 60);
+
+      // Speed limit text
+      if (speedLimit) {
+        ctx.font = "16px -apple-system";
+        ctx.fillStyle = "#d00";
+        ctx.fillText(`${speedLimit} km/h`, centerX, centerY + 90);
+      }
+    }
+
+    function animateNeedleSweep() {
+      const maxSpeed = 180;
+      let step = 0;
+      const totalSteps = 60;
+
+      function animateForward() {
+        if (step <= totalSteps) {
+          displaySpeed = (step / totalSteps) * maxSpeed;
+          drawGauge();
+          step++;
+          requestAnimationFrame(animateForward);
+        } else {
+          requestAnimationFrame(animateBackward);
+        }
+      }
+
+      function animateBackward() {
+        if (step >= 0) {
+          displaySpeed = (step / totalSteps) * maxSpeed;
+          drawGauge();
+          step--;
+          requestAnimationFrame(animateBackward);
+        } else {
+          displaySpeed = 0;
+          drawGauge();
+          startTracking();
+        }
+      }
+
+      animateForward();
+    }
+
+    function haversine(lat1, lon1, lat2, lon2) {
+      const R = 6371000;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(lat1 * Math.PI / 180) *
+        Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    async function querySpeedData(lat, lon) {
+      try {
+        const overpassQuery = `
+          [out:json];
+          (
+            way(around:50,${lat},${lon})["maxspeed"];
+            node(around:500,${lat},${lon})["highway"="speed_camera"];
+          );
+          out body;
+        `;
+        const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        parseSpeedData(data, lat, lon);
+      } catch (err) {
+        console.warn("Overpass API error:", err);
+      }
+    }
+
+    function parseSpeedData(data, lat, lon) {
+      speedLimit = null;
+      nearbyCamera = false;
+
+      for (const el of data.elements) {
+        if (el.tags?.maxspeed) {
+          const match = el.tags.maxspeed.match(/\d+/);
+          if (match) speedLimit = parseInt(match[0]);
+        }
+        if (el.tags?.highway === "speed_camera") {
+          const dist = haversine(lat, lon, el.lat, el.lon);
+          if (dist < cameraWarningDistance) nearbyCamera = true;
+        }
+      }
+    }
+
+    function startTracking() {
+      if (!navigator.geolocation) {
+        warning.textContent = "Geolocation not supported.";
+        return;
+      }
+
+      navigator.geolocation.watchPosition(
+        async (pos) => {
+          const { latitude, longitude, speed } = pos.coords;
+          currentSpeed = Math.max(0, speed ? speed * 3.6 : 0);
+
+          const now = Date.now();
+          if (now - lastQuery > queryInterval) {
+            lastQuery = now;
+            await querySpeedData(latitude, longitude);
+          }
+
+          warning.textContent = "";
+          warning.className = "";
+
+          if (speedLimit && currentSpeed > speedLimit) {
+            warning.textContent = "⚠️ Over speed limit!";
+            warning.className = "over-limit";
+          } else if (nearbyCamera) {
+            warning.textContent = "📸 Speed camera nearby!";
+            warning.className = "camera";
+          }
+
+          displaySpeed = currentSpeed;
+          drawGauge();
+        },
+        (err) => {
+          warning.textContent = "GPS error. Please allow location.";
+          console.error(err);
+        },
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
+      );
+    }
+
+    animateNeedleSweep();
+  </script>
+</body>
+</html>
