@@ -1,154 +1,327 @@
-<!DOCTYPE html>
-<html lang="en-us">
-  <head>
-	<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5221630201042895"
-     crossorigin="anonymous"></script>
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
 
-	<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-CC4ZKKC8EF"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
 
-  gtag('config', 'G-CC4ZKKC8EF');
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
 
-  let displayMode = 'browser';
-  let isPwa = false;
-  const mqStandAlone = '(display-mode: fullscreen)';
-  if (navigator.standalone || window.matchMedia(mqStandAlone).matches) {
-    displayMode = 'fullscreen';
-    isPwa = true
-  }
-  gtag('event', 'pwa_check', {'pwa': isPwa});
-
-//<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-</script>
-    <meta charset="utf-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">  
-    <title>Block Blast Puzzle</title>
-    <link rel="shortcut icon" href="TemplateData/favicon.ico">
-    <link rel="stylesheet" href="TemplateData/style.css">
-    <link rel="manifest" href="manifest.webmanifest">
-  </head>
-  <body>
-    <div id="unity-container">
-      <canvas id="unity-canvas" width=1080 height=1920 tabindex="-1"></canvas>
-      <div id="unity-loading-bar">
-        <div id="unity-logo"></div>
-        <div id="unity-progress-bar-empty">
-          <div id="unity-progress-bar-full"></div>
-        </div>
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Advanced LiDAR Demonstration</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: flex-start;
+      height: 100vh;
+      background: #e6e6e6;
+      font-family: Arial, sans-serif;
+    }
+    #container {
+      display: flex;
+      flex-direction: row;
+      gap: 20px;
+      padding: 20px;
+    }
+    #controls {
+      background: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      width: 250px;
+    }
+    #controls label {
+      display: block;
+      margin: 10px 0 5px;
+      font-size: 14px;
+    }
+    #controls input, #controls select, #controls button {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    #controls button {
+      background: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    #controls button:hover {
+      background: #0056b3;
+    }
+    #info {
+      margin-top: 20px;
+      font-size: 12px;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 10px;
+      border-radius: 4px;
+    }
+    canvas {
+      border: 1px solid #000;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <div id="controls">
+      <h3>LiDAR Control Panel</h3>
+      <label for="scanSpeed">Scan Speed (°/frame):</label>
+      <input type="number" id="scanSpeed" value="2" min="0.1" max="10" step="0.1">
+      <label for="maxDistance">Max Range (px):</label>
+      <input type="number" id="maxDistance" value="300" min="100" max="500" step="10">
+      <label for="scanMode">Scan Mode:</label>
+      <select id="scanMode">
+        <option value="continuous">Continuous (360°)</option>
+        <option value="sector">Sector (90°)</option>
+      </select>
+      <label for="sectorAngle">Sector Angle (°):</label>
+      <input type="number" id="sectorAngle" value="90" min="10" max="180" step="10">
+      <button onclick="addObstacle()">Add Random Obstacle</button>
+      <button onclick="clearObstacles()">Clear Obstacles</button>
+      <div id="info">
+        <p>Points Detected: <span id="pointCount">0</span></p>
+        <p>Scan Angle: <span id="currentAngle">0</span>°</p>
       </div>
-      <div id="unity-warning"> </div>
     </div>
+    <div id="canvas-container"></div>
+  </div>
+  <script>
+    let angle = 0;
+    let scanPoints = [];
+    let obstacles = [];
+    let scanSpeed = 2;
+    let maxDistance = 300;
+    let scanMode = 'continuous';
+    let sectorAngle = 90;
 
-    <script>
-      window.addEventListener("load", function () {
-        if ("serviceWorker" in navigator) {
-          navigator.serviceWorker.register("ServiceWorker.js");
-        }
-      });
+    function setup() {
+      let canvas = createCanvas(800, 600);
+      canvas.parent('canvas-container');
+      // Initial obstacles
+      obstacles = [
+        { x: 300, y: 200, w: 100, h: 50 },
+        { x: 500, y: 400, w: 80, h: 120 },
+        { x: 200, y: 350, w: 150, h: 60 }
+      ];
+      // Event listeners for controls
+      select('#scanSpeed').changed(updateParams);
+      select('#maxDistance').changed(updateParams);
+      select('#scanMode').changed(updateParams);
+      select('#sectorAngle').changed(updateParams);
+    }
 
-	//  window.addEventListener("orientationchange", function () {
-	// 	var orientation = window.orientation;
+    function updateParams() {
+      scanSpeed = parseFloat(select('#scanSpeed').value());
+      maxDistance = parseFloat(select('#maxDistance').value());
+      scanMode = select('#scanMode').value();
+      sectorAngle = parseFloat(select('#sectorAngle').value());
+    }
 
-	// 	if (orientation === 90 || orientation === -90) 
-	// 	{
-	// 		alert("Landscape orientation is not supported");
+    function addObstacle() {
+      let x = random(100, width - 100);
+      let y = random(100, height - 100);
+      let w = random(50, 150);
+      let h = random(50, 150);
+      obstacles.push({ x, y, w, h });
+    }
 
-	// 		setTimeout(function () {
-	// 			window.screen.orientation.lock("portrait-primary");
-	// 		}, 100);
-	// 	}
-	// });
+    function clearObstacles() {
+      obstacles = [];
+      scanPoints = [];
+    }
 
-      var container = document.querySelector("#unity-container");
-      var canvas = document.querySelector("#unity-canvas");
-      var loadingBar = document.querySelector("#unity-loading-bar");
-      var progressBarFull = document.querySelector("#unity-progress-bar-full");
-      var warningBanner = document.querySelector("#unity-warning");
+    function draw() {
+      background(255);
+      
+      // Update control values
+      select('#pointCount').html(scanPoints.length);
+      select('#currentAngle').html(floor(angle));
 
-      // Shows a temporary message banner/ribbon for a few seconds, or
-      // a permanent error message on top of the canvas if type=='error'.
-      // If type=='warning', a yellow highlight color is used.
-      // Modify or remove this function to customize the visually presented
-      // way that non-critical warnings and error messages are presented to the
-      // user.
-      function unityShowBanner(msg, type) {
-        function updateBannerVisibility() {
-          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
-        }
-        var div = document.createElement('div');
-        div.innerHTML = msg;
-        warningBanner.appendChild(div);
-        if (type == 'error') div.style = 'background: red; padding: 10px;';
-        else {
-          if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
-          setTimeout(function() {
-            warningBanner.removeChild(div);
-            updateBannerVisibility();
-          }, 5000);
-        }
-        updateBannerVisibility();
-      }
-	 
-      var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/BlockBlast1.1-8.loader.js";
-      var config = {
-        dataUrl: buildUrl + "/BlockBlast1.1-8.data.unityweb",
-        frameworkUrl: buildUrl + "/BlockBlast1.1-8.framework.js.unityweb",
-        codeUrl: buildUrl + "/BlockBlast1.1-8.wasm.unityweb",
-        streamingAssetsUrl: "StreamingAssets",
-        companyName: "reun",
-        productName: "Block Blast Puzzle",
-        productVersion: "1.1",
-        showBanner: unityShowBanner,
-      };
+      // Draw LiDAR sensor
+      let sensorX = width / 2;
+      let sensorY = height / 2;
+      fill(255, 0, 0);
+      ellipse(sensorX, sensorY, 12, 12);
 
-      // By default Unity keeps WebGL canvas render target size matched with
-      // the DOM size of the canvas element (scaled by window.devicePixelRatio)
-      // Set this to false if you want to decouple this synchronization from
-      // happening inside the engine, and you would instead like to size up
-      // the canvas DOM size and WebGL render target sizes yourself.
-      // config.matchWebGLToCanvasSize = false;
-
-      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        // Mobile device style: fill the whole browser client area with the game canvas:
-        var meta = document.createElement('meta');
-        meta.name = 'viewport';
-        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
-        document.getElementsByTagName('head')[0].appendChild(meta);
+      // Handle scan mode
+      let startAngle = scanMode === 'sector' ? -sectorAngle / 2 : 0;
+      let endAngle = scanMode === 'sector' ? sectorAngle / 2 : 360;
+      if (scanMode === 'sector') {
+        if (angle > endAngle) angle = startAngle;
       }
 
-      loadingBar.style.display = "block";
+      // Simulate LiDAR scanning
+      let rayX = sensorX + cos(radians(angle)) * maxDistance;
+      let rayY = sensorY + sin(radians(angle)) * maxDistance;
 
-      var script = document.createElement("script");
-      script.src = loaderUrl;
-      script.onload = () => {
-        createUnityInstance(canvas, config, (progress) => {
-          progressBarFull.style.width = 100 * progress + "%";
-        }).then((unityInstance) => {
-          loadingBar.style.display = "none";
-        }).catch((message) => {
-          alert(message);
-        });
-      };
-      document.body.appendChild(script);
-    </script>
+      // Find closest intersection
+      let closestPoint = null;
+      let closestDist = maxDistance;
 
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5221630201042895"
-crossorigin="anonymous"></script>
-<!-- Banner test -->
-<ins class="adsbygoogle"
-style="display:block"
-data-ad-client="ca-pub-5221630201042895"
-data-ad-slot="3988294629"
-data-ad-format="auto"
-data-full-width-responsive="true"></ins>
-<script>
-(adsbygoogle = window.adsbygoogle || []).push({});
-</script>
+      for (let obs of obstacles) {
+        let intersection = rayIntersectsRect(sensorX, sensorY, rayX, rayY, obs);
+        if (intersection) {
+          let d = dist(sensorX, sensorY, intersection.x, intersection.y);
+          if (d < closestDist) {
+            closestDist = d;
+            closestPoint = intersection;
+          }
+        }
+      }
 
-  </body>
+      // Draw scanning ray
+      stroke(0, 0, 255, 150);
+      strokeWeight(2);
+      line(sensorX, sensorY, closestPoint ? closestPoint.x : rayX, closestPoint ? closestPoint.y : rayY);
+
+      // Store and draw detected point
+      if (closestPoint) {
+        scanPoints.push({ x: closestPoint.x, y: closestPoint.y, angle: angle, dist: closestDist });
+        fill(0, 255, 0);
+        noStroke();
+        ellipse(closestPoint.x, closestPoint.y, 6, 6);
+      }
+
+      // Draw previous scan points with fading
+      for (let i = scanPoints.length - 1; i >= 0; i--) {
+        let p = scanPoints[i];
+        let alpha = map(i, 0, scanPoints.length, 50, 255);
+        fill(0, 255, 0, alpha);
+        ellipse(p.x, p.y, 6, 6);
+        if (scanPoints.length > 300) {
+          scanPoints.shift();
+        }
+      }
+
+      // Draw obstacles
+      fill(100, 100, 100, 200);
+      noStroke();
+      for (let obs of obstacles) {
+        rect(obs.x, obs.y, obs.w, obs.h);
+      }
+
+      // Draw polar plot in bottom-right corner
+      drawPolarPlot();
+
+      // Update angle
+      angle = (angle + scanSpeed) % 360;
+      if (scanMode === 'sector') {
+        if (angle > endAngle) angle = startAngle;
+      }
+    }
+
+    function drawPolarPlot() {
+      let plotX = width - 150;
+      let plotY = height - 150;
+      let plotRadius = 100;
+
+      // Draw plot background
+      fill(255, 255, 255, 200);
+      stroke(0);
+      strokeWeight(1);
+      ellipse(plotX, plotY, plotRadius * 2, plotRadius * 2);
+
+      // Draw range circles
+      stroke(200);
+      for (let r = plotRadius / 3; r <= plotRadius; r += plotRadius / 3) {
+        noFill();
+        ellipse(plotX, plotY, r * 2, r * 2);
+      }
+
+      // Draw scan points in polar plot
+      noStroke();
+      fill(0, 255, 0, 150);
+      for (let p of scanPoints) {
+        let r = map(p.dist, 0, maxDistance, 0, plotRadius);
+        let theta = radians(p.angle);
+        let px = plotX + r * cos(theta);
+        let py = plotY + r * sin(theta);
+        ellipse(px, py, 4, 4);
+      }
+    }
+
+    function rayIntersectsRect(x1, y1, x2, y2, rect) {
+      let lines = [
+        { x1: rect.x, y1: rect.y, x2: rect.x + rect.w, y2: rect.y },
+        { x1: rect.x, y1: rect.y + rect.h, x2: rect.x + rect.w, y2: rect.y + rect.h },
+        { x1: rect.x, y1: rect.y, x2: rect.x, y2: rect.y + rect.h },
+        { x1: rect.x + rect.w, y1: rect.y, x2: rect.x + rect.w, y2: rect.y + rect.h }
+      ];
+
+      let closestIntersection = null;
+      let closestT = Infinity;
+
+      for (let line of lines) {
+        let intersection = lineIntersection(x1, y1, x2, y2, line.x1, line.y1, line.x2, line.y2);
+        if (intersection && intersection.t >= 0 && intersection.t <= 1 && intersection.u >= 0 && intersection.u <= 1) {
+          if (intersection.t < closestT) {
+            closestT = intersection.t;
+            closestIntersection = intersection;
+          }
+        }
+      }
+
+      return closestIntersection;
+    }
+
+    function lineIntersection(x1, y1, x2, y2, x3, y3, x4, y4) {
+      let denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
+      if (denom === 0) return null;
+
+      let ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom;
+      let ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denom;
+
+      if (ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1) {
+        return {
+          x: x1 + ua * (x2 - x1),
+          y: y1 + ua * (y2 - y1),
+          t: ua,
+          u: ub
+        };
+      }
+      return null;
+    }
+  </script>
+</body>
 </html>
