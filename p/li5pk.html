@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LIDAR 3D-Punktwolke Demo</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #1a1a1a; }
+        #controls { position: absolute; top: 10px; right: 10px; background: rgba(0, 0, 0, 0.8); padding: 15px; border-radius: 5px; }
+        button { margin: 5px; padding: 8px; background: #4CAF50; border: none; color: #fff; cursor: pointer; border-radius: 3px; }
+        button:hover { background: #45a049; }
+        canvas { width: 100%; height: 100%; }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <button onclick="switchModel('cube')">Würfel</button>
+        <button onclick="switchModel('sphere')">Kugel</button>
+        <button onclick="changePointSize(0.01)">Kleinere Punkte</button>
+        <button onclick="changePointSize(-0.01)">Größere Punkte</button>
+        <button onclick="resetScan()">Scan zurücksetzen</button>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script>
+        // Szene, Kamera, Renderer
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // OrbitControls für Interaktion
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+
+        let pointCloud, material, scanLine;
+        let currentPointSize = 0.05;
+        let scanProgress = 0;
+        let points = [];
+        let colors = [];
+        let currentModel = 'sphere';
+        const maxPoints = 50000;
+
+        // LIDAR-Scanner-Linie
+        function createScanLine() {
+            if (scanLine) scene.remove(scanLine);
+            const scanGeometry = new THREE.BufferGeometry();
+            const scanVertices = new Float32Array([
+                -2, scanProgress - 2, 0,
+                2, scanProgress - 2, 0
+            ]);
+            scanGeometry.setAttribute('position', new THREE.BufferAttribute(scanVertices, 3));
+            const scanMaterial = new THREE.LineBasicMaterial({ color: 0xff0000 });
+            scanLine = new THREE.Line(scanGeometry, scanMaterial);
+            scene.add(scanLine);
+        }
+
+        // Punktwolke erstellen
+        function createPointCloud(model) {
+            if (pointCloud) scene.remove(pointCloud);
+            points = [];
+            colors = [];
+            scanProgress = 0;
+            currentModel = model;
+            createScanLine();
+        }
+
+        // Punkte während des Scans hinzufügen
+        function updatePointCloud() {
+            if (scanProgress <= 4) {
+                const pointsPerFrame = 1000;
+                for (let i = 0; i < pointsPerFrame && points.length / 3 < maxPoints; i++) {
+                    let x, y, z, r, g, b;
+                    if (currentModel === 'cube') {
+                        x = (Math.random() - 0.5) * 4;
+                        y = (Math.random() - 0.5) * 4;
+                        z = (Math.random() - 0.5) * 4;
+                        r = (x + 2) / 4;
+                        g = (y + 2) / 4;
+                        b = (z + 2) / 4;
+                    } else {
+                        const theta = Math.random() * Math.PI * 2;
+                        const phi = Math.acos(2 * Math.random() - 1);
+                        const radius = 2;
+                        x = radius * Math.sin(phi) * Math.cos(theta);
+                        y = radius * Math.sin(phi) * Math.sin(theta);
+                        z = radius * Math.cos(phi);
+                        r = Math.random();
+                        g = Math.random();
+                        b = Math.random();
+                    }
+                    // Nur Punkte in der Nähe der Scanlinie hinzufügen
+                    if (Math.abs(y - (scanProgress - 2)) < 0.1) {
+                        points.push(x, y, z);
+                        colors.push(r, g, b);
+                    }
+                }
+                scanProgress += 0.02;
+
+                // Punktwolke aktualisieren
+                if (pointCloud) scene.remove(pointCloud);
+                const geometry = new THREE.BufferGeometry();
+                geometry.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
+                geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+                material = new THREE.PointsMaterial({ size: currentPointSize, vertexColors: true });
+                pointCloud = new THREE.Points(geometry, material);
+                scene.add(pointCloud);
+
+                // Scanlinie aktualisieren
+                createScanLine();
+            }
+        }
+
+        // Funktionen für Interaktion
+        window.switchModel = function(model) {
+            createPointCloud(model);
+        };
+
+        window.changePointSize = function(delta) {
+            currentPointSize = Math.max(0.01, Math.min(0.2, currentPointSize + delta));
+            if (material) material.size = currentPointSize;
+        };
+
+        window.resetScan = function() {
+            createPointCloud(currentModel);
+        };
+
+        // Initiale Punktwolke
+        createPointCloud('sphere');
+
+        // Kamera-Position
+        camera.position.z = 5;
+
+        // Animation
+        function animate() {
+            requestAnimationFrame(animate);
+            updatePointCloud();
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Fenstergröße anpassen
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
