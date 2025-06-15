@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>LiDAR-Demo: Maya-Stätten</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: linear-gradient(#000, #001100);
+      font-family: 'Arial', sans-serif;
+      overflow: hidden;
+    }
+    canvas {
+      border: 3px solid #fff;
+      box-shadow: 0 0 40px rgba(0, 255, 0, 0.6);
+    }
+    #ui {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      color: #fff;
+      background: rgba(0, 0, 0, 0.9);
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(0, 255, 0, 0.7);
+      transition: transform 0.3s ease;
+    }
+    #ui.collapsed {
+      transform: translateX(250px);
+    }
+    #ui h2 {
+      margin: 0 0 10px;
+      font-size: 22px;
+      text-shadow: 0 0 10px rgba(0, 255, 0, 0.9);
+      cursor: pointer;
+    }
+    .button {
+      padding: 8px 16px;
+      margin: 4px;
+      font-size: 13px;
+      background: linear-gradient(#4CAF50, #2E7D32);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: transform 0.2s, background 0.3s;
+    }
+    .button:hover:not(:disabled) {
+      transform: scale(1.05);
+      background: linear-gradient(#45a049, #1b5e20);
+    }
+    .button:disabled {
+      background: #333;
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+    #progress {
+      width: 100%;
+      height: 6px;
+      background: #222;
+      border-radius: 5px;
+      margin: 10px 0;
+      overflow: hidden;
+    }
+    #progress-bar {
+      height: 100%;
+      background: #4CAF50;
+      width: 0;
+      transition: width 0.1s;
+    }
+    #scan-data {
+      width: 100%;
+      height: 20px;
+      background: rgba(0, 0, 0, 0.8);
+      border-radius: 5px;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div id="ui">
+    <h2 onclick="toggleUI()">LiDAR-Scan: Maya-Stätten</h2>
+    <button id="startScan" class="button" onclick="startScan()">Scan starten</button>
+    <button id="toggleVeg" class="button" onclick="toggleVegetation()" disabled>Vegetation ausblenden</button>
+    <button id="resetScan" class="button" onclick="resetScan()" disabled>Scan zurücksetzen</button>
+    <button id="exportData" class="button" onclick="exportData()" disabled>Daten exportieren</button>
+    <div id="progress"><div id="progress-bar"></div></div>
+    <div id="scan-data"></div>
+  </div>
+  <script>
+    let scanY = -20;
+    let scanSpeed = 4;
+    let isScanning = false;
+    let scanCompleted = false;
+    let showVegetation = true;
+    let jungle = [];
+    let structures = [];
+    let particles = [];
+    let terrain = [];
+    let scanPoints = [];
+    let camera;
+
+    function setup() {
+      try {
+        createCanvas(800, 600, WEBGL);
+      } catch (e) {
+        console.error("WEBGL initialization failed:", e);
+        createCanvas(800, 600); // Fallback to 2D
+      }
+      camera = createCamera();
+      camera.setPosition(0, 0, 600);
+      camera.lookAt(0, 0, 0);
+      // Terrain
+      let gridSize = 15;
+      for (let i = 0; i < gridSize; i++) {
+        terrain[i] = [];
+        for (let j = 0; j < gridSize; j++) {
+          let x = map(i, 0, gridSize - 1, -width / 2, width / 2);
+          let y = map(j, 0, gridSize - 1, -height / 2, height / 2);
+          let z = noise(i * 0.1, j * 0.1) * 40 - 20;
+          terrain[i][j] = { x, y, z };
+        }
+      }
+      // Vegetation
+      for (let i = 0; i < 500; i++) {
+        let x = random(-width / 2, width / 2);
+        let y = random(-height / 2, height / 2);
+        let type = random(['tree', 'bush', 'fern']);
+        let offsets = type === 'bush' ? [
+          { dx: -random(8, 15), dy: random(-8, 8) },
+          { dx: random(8, 15), dy: random(-8, 8) },
+          { dx: 0, dy: random(-8, 8) }
+        ] : [];
+        let z = noise(x * 0.01, y * 0.01) * 40 - 20;
+        jungle.push({ x, y, z, size: random(8, 30), type, scanned: false, offsets, sway: random(0, TWO_PI) });
+      }
+      // Structures
+      structures.push({ x: -width / 4, y: 0, w: 140, h: 120, z: -30, type: 'pyramid' });
+      structures.push({ x: width / 4, y: -height / 6, w: 180, h: 100, z: -25, type: 'platform' });
+      structures.push({ x: 0, y: height / 3, w: 120, h: 80, z: -35, type: 'temple' });
+    }
+
+    function draw() {
+      background(0, 30, 0);
+      ambientLight(20, 20, 20);
+      if (isScanning) {
+        pointLight(180, 255, 180, 0, scanY, 200);
+      } else if (scanCompleted && !showVegetation) {
+        pointLight(120, 120, 180, 0, 0, 400);
+      } else {
+        pointLight(80, 80, 80, 0, 0, 300);
+      }
+      // Terrain
+      push();
+      noStroke();
+      fill(0, 50, 0, 200);
+      for (let i = 0; i < terrain.length - 1; i++) {
+        for (let j = 0; j < terrain[i].length - 1; j++) {
+          beginShape();
+          vertex(terrain[i][j].x, terrain[i][j].y, terrain[i][j].z);
+          vertex(terrain[i + 1][j].x, terrain[i + 1][j].y, terrain[i + 1][j].z);
+          vertex(terrain[i + 1][j + 1].x, terrain[i + 1][j + 1].y, terrain[i + 1][j + 1].z);
+          vertex(terrain[i][j + 1].x, terrain[i][j + 1].y, terrain[i][j + 1].z);
+          endShape(CLOSE);
+        }
+      }
+      pop();
+      // Volumetric Fog
+      if (showVegetation) {
+        for (let z = -80; z < 0; z += 15) {
+          push();
+          translate(0, 0, z);
+          fill(0, 40, 0, 40);
+          noStroke();
+          plane(width * 1.5, height * 1.5);
+          pop();
+        }
+      }
+      // Structures
+      for (let structure of structures) {
+        if (scanY > structure.y - structure.h / 2 || scanCompleted) {
+          push();
+          translate(structure.x, structure.y, structure.z);
+          if (showVegetation && !(scanCompleted && !isScanning)) {
+            // Hidden
+          } else {
+            drawStructurePoints(structure);
+          }
+          pop();
+        }
+      }
+      // Vegetation
+      if (showVegetation) {
+        for (let plant of jungle) {
+          if (plant.scanned || scanY > plant.y) {
+            plant.scanned = true;
+            push();
+            translate(plant.x, plant.y, plant.z);
+            let sway = sin(frameCount * 0.02 + plant.sway) * 1;
+            if (plant.type === 'tree') drawTree(plant.size, sway);
+            else if (plant.type === 'bush') drawBush(plant.size, plant.offsets);
+            else drawFern(plant.size, sway);
+            pop();
+          }
+        }
+      }
+      // Scanstrahl und Partikel
+      if (isScanning) {
+        push();
+        translate(0, scanY, 10);
+        noStroke();
+        fill(0, 255, 0, 50);
+        plane(width, 10);
+        stroke(0, 255, 0, 150);
+        strokeWeight(3);
+        line(-width / 2, 0, 0, width / 2, 0, 0);
+        pop();
+        if (frameCount % 3 === 0) {
+          for (let i = 0; i < 5; i++) {
+            let x = random(-width / 2, width / 2);
+            let y = scanY;
+            let z = noise(x * 0.01, y * 0.01) * 40 - 20;
+            particles.push({ x, y, z, vy: random(-2, -1), life: 30, size: random(1, 2.5), col: random(200, 255) });
+            scanPoints.push({ x, y });
+          }
+        }
+        for (let i = particles.length - 1; i >= 0; i--) {
+          let p = particles[i];
+          p.y += p.vy;
+          p.life--;
+          if (p.life <= 0) particles.splice(i, 1);
+          else {
+            push();
+            translate(p.x, p.y, p.z);
+            fill(0, p.col, 0, p.life * 5);
+            noStroke();
+            sphere(p.size);
+            pop();
+          }
+        }
+        // Scan-Daten-Visualisierung
+        let scanData = document.getElementById('scan-data');
+        scanData.innerHTML = '';
+        let svg = `<svg width="100%" height="20">`;
+        for (let i = 0; i < scanPoints.length; i += 10) {
+          let x = map(i, 0, scanPoints.length, 0, 100);
+          let y = random(5, 15);
+          svg += `<rect x="${x}%" y="${10 - y / 2}" width="1%" height="${y}" fill="#0f0"/>`;
+        }
+        svg += `</svg>`;
+        scanData.innerHTML = svg;
+        // Fortschrittsbalken
+        let progress = constrain((scanY + 20) / (height + 20), 0, 1);
+        document.getElementById('progress-bar').style.width = `${progress * 100}%`;
+        scanY += scanSpeed;
+        if (scanY > height + 20) {
+          isScanning = false;
+          scanCompleted = true;
+          document.getElementById('startScan').disabled = true;
+          document.getElementById('toggleVeg').disabled = false;
+          document.getElementById('resetScan').disabled = false;
+          document.getElementById('exportData').disabled = false;
+        }
+      }
+      // Kamerasteuerung
+      if (mouseIsPressed && mouseButton === LEFT) {
+        camera.pan(-movedX * 0.002);
+        camera.tilt(movedY * 0.002);
+      }
+      if (mouseIsPressed && mouseButton === RIGHT) {
+        camera.move(movedX * 0.5, -movedY * 0.5, 0);
+      }
+    }
+
+    function mouseWheel(event) {
+      camera.move(0, 0, event.delta * 0.5);
+      return false;
+    }
+
+    function drawTree(size, sway) {
+      push();
+      translate(0, 0, size / 2);
+      fill(139, 69, 19, 220);
+      noStroke();
+      cylinder(size / 8, size);
+      push();
+      translate(0, -size / 2, sway);
+      fill(34, 139, 34, 180);
+      sphere(size * 0.6);
+      pop();
+      pop();
+    }
+
+    function drawBush(size, offsets) {
+      fill(50, 205, 50, 180);
+      noStroke();
+      for (let offset of offsets) {
+        push();
+        translate(offset.dx, offset.dy, size / 3);
+        sphere(size / 3);
+        pop();
+      }
+    }
+
+    function drawFern(size, sway) {
+      fill(60, 179, 113, 180);
+      noStroke();
+      for (let i = -2; i <= 2; i++) {
+        push();
+        translate(i * size / 7, 0, size / 4 + sway);
+        cone(size / 7, size / 2);
+        pop();
+      }
+    }
+
+    function drawStructurePoints(structure) {
+      noStroke();
+      let pointCount = 800;
+      for (let i = 0; i < pointCount; i++) {
+        let x, y, z;
+        if (structure.type === 'pyramid') {
+          let t = random();
+          let u = random();
+          if (u > t) [t, u] = [u, t];
+          x = (structure.w / 2) * (2 * t - 1);
+          y = (structure.h / 2) * (1 - 2 * u);
+          z = (structure.h / 2) * (1 - u) - structure.h / 4 + random(-1, 1);
+        } else if (structure.type === 'platform') {
+          x = random(-structure.w / 2, structure.w / 2);
+          y = random(-structure.h / 2, structure.h / 2);
+          z = random(-structure.h / 4, structure.h / 4) + random(-1, 1);
+        } else {
+          x = random(-structure.w / 2, structure.w / 2);
+          y = random(-structure.h / 2, structure.h / 2);
+          z = random(-structure.h / 2, structure.h / 2) + random(-1, 1);
+        }
+        push();
+        translate(x, y, z);
+        let depth = map(z, -50, 50, 180, 230);
+        fill(depth, depth, 230, 200);
+        sphere(0.7);
+        pop();
+      }
+    }
+
+    function startScan() {
+      if (!isScanning && !scanCompleted) {
+        isScanning = true;
+        scanY = -20;
+        scanPoints = [];
+        document.getElementById('startScan').disabled = true;
+      }
+    }
+
+    function toggleVegetation() {
+      showVegetation = !showVegetation;
+      document.getElementById('toggleVeg').innerText = showVegetation ? 'Vegetation ausblenden' : 'Vegetation einblenden';
+    }
+
+    function resetScan() {
+      isScanning = false;
+      scanCompleted = false;
+      scanY = -20;
+      showVegetation = true;
+      particles = [];
+      scanPoints = [];
+      document.getElementById('startScan').disabled = false;
+      document.getElementById('toggleVeg').disabled = true;
+      document.getElementById('resetScan').disabled = true;
+      document.getElementById('exportData').disabled = true;
+      document.getElementById('progress-bar').style.width = '0%';
+      document.getElementById('scan-data').innerHTML = '';
+      camera.setPosition(0, 0, 600);
+      camera.lookAt(0, 0, 0);
+    }
+
+    function exportData() {
+      let data = {
+        terrain: terrain.flat().map(t => ({ x: t.x, y: t.y, z: t.z })),
+        vegetation: jungle.filter(p => p.scanned).map(p => ({ type: p.type, x: p.x, y: p.y, z: p.z, size: p.size })),
+        structures: structures.map(s => ({ type: s.type, x: s.x, y: s.y, z: s.z, width: s.w, height: s.h }))
+      };
+      let dataStr = JSON.stringify(data, null, 2);
+      let blob = new Blob([dataStr], { type: 'application/json' });
+      let url = URL.createObjectURL(blob);
+      let a = document.createElement('a');
+      a.href = url;
+      a.download = 'lidar_scan_data.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function toggleUI() {
+      document.getElementById('ui').classList.toggle('collapsed');
+    }
+  </script>
+</body>
+</html>
