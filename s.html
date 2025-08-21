@@ -40,7 +40,7 @@
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
         "Helvetica Neue", Arial;
-      height: 100vh;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -51,13 +51,12 @@
     .container {
       position: relative;
       width: 100%;
-      max-width: 1200px;
-      height: 100vh;
+      max-width: 90vw;
+      padding: 1rem;
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
-      padding: 1rem;
+      justify-content: center;
     }
 
     .search-container {
@@ -70,7 +69,7 @@
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
       position: relative;
       width: 100%;
-      max-width: 600px;
+      max-width: min(600px, 80vw);
     }
 
     [data-theme="dark"] .search-container {
@@ -80,7 +79,7 @@
     .search-bar {
       border: none;
       background: transparent;
-      font-size: 1.25rem;
+      font-size: clamp(1rem, 2.5vw, 1.25rem);
       color: inherit;
       outline: none;
       flex-grow: 1;
@@ -94,8 +93,8 @@
     }
 
     .search-icon img {
-      width: 24px;
-      height: 24px;
+      width: clamp(20px, 3vw, 24px);
+      height: clamp(20px, 3vw, 24px);
       border-radius: 50%;
       transition: transform 0.2s;
     }
@@ -107,19 +106,25 @@
       background: var(--panel-light);
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      display: none;
       flex-direction: column;
       padding: 0.5rem;
       z-index: 10;
-      min-width: 140px;
+      min-width: clamp(120px, 20vw, 140px);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s ease, visibility 0s linear 1s;
+    }
+
+    .search-icon:hover .engine-selector,
+    .engine-selector:hover {
+      display: flex;
+      opacity: 1;
+      visibility: visible;
+      transition: opacity 0.2s ease, visibility 0s linear;
     }
 
     [data-theme="dark"] .engine-selector {
       background: var(--panel-dark);
-    }
-
-    .search-icon:hover .engine-selector {
-      display: flex;
     }
 
     .engine-option {
@@ -130,7 +135,7 @@
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      font-size: 0.9rem;
+      font-size: clamp(0.85rem, 2vw, 0.9rem);
       color: inherit;
       user-select: none;
     }
@@ -144,8 +149,8 @@
     }
 
     .engine-option img {
-      width: 20px;
-      height: 20px;
+      width: clamp(18px, 2.5vw, 20px);
+      height: clamp(18px, 2.5vw, 20px);
       border-radius: 50%;
     }
 
@@ -162,7 +167,7 @@
       padding: 0.5rem;
       z-index: 10;
       width: calc(100% - 1.5rem);
-      max-width: 600px;
+      max-width: min(600px, 80vw);
     }
 
     [data-theme="dark"] .predictive-suggestions {
@@ -174,7 +179,7 @@
       cursor: pointer;
       border-radius: 8px;
       transition: background 0.2s;
-      font-size: 0.9rem;
+      font-size: clamp(0.85rem, 2vw, 0.9rem);
       color: inherit;
       user-select: none;
     }
@@ -190,22 +195,25 @@
     .top-left,
     .top-right,
     .bottom-left {
-      position: absolute;
-      font-size: 0.9rem;
+      position: fixed;
+      font-size: clamp(0.75rem, 1.8vw, 0.9rem);
       padding: 0.75rem;
       display: flex;
       align-items: center;
+      z-index: 5;
     }
 
     .top-left {
       top: 0;
       left: 0;
     }
+
     .top-right {
       top: 0;
       right: 0;
       gap: 0.5rem;
     }
+
     .bottom-left {
       bottom: 0;
       left: 0;
@@ -217,7 +225,7 @@
       background: transparent;
       border: none;
       color: inherit;
-      font-size: 1.2rem;
+      font-size: clamp(1rem, 2.5vw, 1.2rem);
       cursor: pointer;
       padding: 0.5rem;
       display: flex;
@@ -226,6 +234,7 @@
       transition: color 0.3s;
       touch-action: manipulation;
     }
+
     .icon-button:hover {
       color: var(--accent);
     }
@@ -241,8 +250,7 @@
       box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
       display: none;
       flex-direction: column;
-      width: 90%;
-      max-width: 360px;
+      width: min(90vw, 360px);
       z-index: 20;
       color: inherit;
     }
@@ -261,11 +269,11 @@
     #bookmarkPopup header h2 {
       margin: 0;
       font-weight: 600;
-      font-size: 1.25rem;
+      font-size: clamp(1.1rem, 2.5vw, 1.25rem);
     }
 
     #bookmarkPopup header .icon-button {
-      font-size: 1.5rem;
+      font-size: clamp(1.3rem, 2.8vw, 1.5rem);
       line-height: 1;
     }
 
@@ -278,7 +286,7 @@
 
     #addBookmarkForm input {
       padding: 0.5rem 0.75rem;
-      font-size: 1rem;
+      font-size: clamp(0.9rem, 2.2vw, 1rem);
       border: 1px solid #ccc;
       border-radius: 8px;
       outline-offset: 2px;
@@ -300,12 +308,12 @@
 
     #addBookmarkForm .icon-button.add-submit {
       align-self: flex-end;
-      font-size: 1.4rem;
+      font-size: clamp(1.2rem, 2.5vw, 1.4rem);
       background-color: var(--accent);
       color: white;
       border-radius: 50%;
-      width: 32px;
-      height: 32px;
+      width: clamp(28px, 4vw, 32px);
+      height: clamp(28px, 4vw, 32px);
       display: flex;
       justify-content: center;
       align-items: center;
@@ -313,12 +321,13 @@
       cursor: pointer;
       transition: background-color 0.3s;
     }
+
     #addBookmarkForm .icon-button.add-submit:hover {
       background-color: #005fcc;
     }
 
     .bookmark-list {
-      max-height: 240px;
+      max-height: clamp(200px, 40vh, 240px);
       overflow-y: auto;
       border-top: 1px solid #ccc;
       padding-top: 0.5rem;
@@ -356,13 +365,14 @@
       font-weight: 500;
       flex-grow: 1;
       overflow-wrap: anywhere;
+      font-size: clamp(0.9rem, 2vw, 0.95rem);
     }
 
     .bookmark-item button {
       background: transparent;
       border: none;
       color: #cc0000;
-      font-size: 1.1rem;
+      font-size: clamp(1rem, 2.2vw, 1.1rem);
       cursor: pointer;
       opacity: 0;
       transition: opacity 0.2s;
@@ -380,7 +390,7 @@
     /* Mobile-specific styles */
     @media screen and (max-width: 768px) {
       body {
-        font-size: 16px;
+        font-size: clamp(14px, 3vw, 16px);
       }
 
       .container {
@@ -389,82 +399,82 @@
 
       .search-container {
         padding: 0.5rem 1rem;
-        max-width: 100%;
+        max-width: 95vw;
       }
 
       .search-bar {
-        font-size: 1rem;
+        font-size: clamp(0.9rem, 2.2vw, 1rem);
       }
 
       .search-icon img {
-        width: 20px;
-        height: 20px;
+        width: clamp(18px, 2.8vw, 20px);
+        height: clamp(18px, 2.8vw, 20px);
       }
 
       .engine-selector {
-        min-width: 120px;
-        left: 0.5rem;
+        min-width: clamp(100px, 25vw, 120px
       }
 
       .engine-option {
-        font-size: 0.85rem;
+        font-size: clamp(0.8rem, 2vw, 0.85rem);
         padding: 0.4rem;
       }
 
       .engine-option img {
-        width: 18px;
-        height: 18px;
+        width: clamp(16px, 2.5vw, 18px);
+        height: clamp(16px, 2.5vw, 18px);
       }
 
       .predictive-suggestions {
         left: 0.5rem;
         right: 0.5rem;
         width: calc(100% - 1rem);
+        max-width: 95vw;
       }
 
       .suggestion-item {
-        font-size: 0.85rem;
+        font-size: clamp(0.8rem, 2vw, 0.85rem);
         padding: 0.4rem;
       }
 
       .top-left,
       .top-right,
       .bottom-left {
-        font-size: 0.8rem;
+        font-size: clamp(0.7rem, 1.8vw, 0.8rem);
         padding: 0.5rem;
       }
 
       .icon-button {
-        font-size: 1rem;
+        font-size: clamp(0.9rem, 2.2vw, 1rem);
         padding: 0.75rem;
       }
 
       #bookmarkPopup {
-        width: 95%;
+        width: 95vw;
         padding: 0.75rem;
       }
 
       #bookmarkPopup header h2 {
-        font-size: 1.1rem;
+        font-size: clamp(1rem, 2.2vw, 1.1rem);
       }
 
       #bookmarkPopup header .icon-button {
-        font-size: 1.3rem;
+        font-size: clamp(1.2rem, 2.5vw, 1.3rem);
       }
 
       #addBookmarkForm input {
-        font-size: 0.9rem;
+        font-size: clamp(0.85rem, 2vw, 0.9rem);
         padding: 0.4rem 0.6rem;
       }
 
       #addBookmarkForm .icon-button.add-submit {
-        width: 28px;
-        height: 28px;
-        font-size: 1.2rem;
+        width: clamp(26px, 3.5vw, 28px);
+        height: clamp(26px, 3.5vw, 28px);
+        font-size: clamp(1.1rem, 2.2vw, 1.2rem);
       }
 
       .bookmark-list {
-        max-height: 200px;
+        max-height: clamp(180px, 35vh, 200px);
       }
 
       .bookmark-item {
@@ -472,11 +482,11 @@
       }
 
       .bookmark-item a {
-        font-size: 0.9rem;
+        font-size: clamp(0.85rem, 2vw, 0.9rem);
       }
 
       .bookmark-item button {
-        font-size: 1rem;
+        font-size: clamp(0.9rem, 2vw, 1rem);
         padding: 0.5rem;
       }
     }
@@ -487,7 +497,7 @@
       }
 
       .search-bar {
-        font-size: 0.9rem;
+        font-size: clamp(0.85rem, 2vw, 0.9rem);
       }
 
       .search-icon {
@@ -497,7 +507,8 @@
       .top-left,
       .top-right,
       .bottom-left {
-        font-size: 0.75rem;
+        font-size: clamp(0.65rem, 1.8vw, 0.75rem);
+        padding: 0.5rem;
       }
 
       .icon-button {
@@ -558,12 +569,20 @@
             Startpage
           </div>
           <div class="engine-option" onclick="setEngine('Arc')">
-            <img src="https://raw.githubusercontent.com/wuku0/wuku0.github.io/62a64c46e5777810b98fcd7d8ed6fcfbf38b3249/images/arc-browser-icon.svg" alt="Arc" />
-            Arc
+            <img src="https://raw.githubusercontent.com/wuku0/wuku0.github.io/62a64c46e5777810b98fcd7d8ed6fcfbf38b3249/images/arc-browser-icon.svg" alt="Perplexity" />
+            Perplexity
           </div>
           <div class="engine-option" onclick="setEngine('Ecosia')">
             <img src="https://play-lh.googleusercontent.com/_nuyeEgn6In53vmNpgZkj2nVyR26CPZe3QxKOIk1jWVqwkt4WGWo6m4k4CGNS_3C7Og" alt="Ecosia" />
             Ecosia
+          </div>
+          <div class="engine-option" onclick="setEngine('Andi')">
+            <img src="https://andisearch.com/favicon.ico" alt="Andi" />
+            Andi
+          </div>
+          <div class="engine-option" onclick="setEngine('You')">
+            <img src="https://you.com/favicon.ico" alt="You" />
+            You
           </div>
         </div>
       </div>
@@ -640,12 +659,20 @@
         icon: "https://www.startpage.com/favicon.ico",
       },
       Arc: {
-        url: "https://arc.net/search?q=",
+        url: "https://www.perplexity.ai/search?q=",
         icon: "https://raw.githubusercontent.com/wuku0/wuku0.github.io/62a64c46e5777810b98fcd7d8ed6fcfbf38b3249/images/arc-browser-icon.svg",
       },
       Ecosia: {
         url: "https://www.ecosia.org/search?q=",
         icon: "https://play-lh.googleusercontent.com/_nuyeEgn6In53vmNpgZkj2nVyR26CPZe3QxKOIk1jWVqwkt4WGWo6m4k4CGNS_3C7Og",
+      },
+      Andi: {
+        url: "https://andisearch.com/search?q=",
+        icon: "https://andisearch.com/favicon.ico",
+      },
+      You: {
+        url: "https://you.com/search?q=",
+        icon: "https://you.com/favicon.ico",
       },
     };
 
