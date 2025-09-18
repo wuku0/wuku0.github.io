@@ -1,0 +1,1106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Quizzly — Local Quizlet-like</title>
+<style>
+:root{
+--bg: #0f1221;
+--panel:#171a2e;
+--muted:#98a2b3;
+--text:#e6e8ef;
+--accent:#7c91ff;
+--accent-2:#30d5c8;
+--danger:#ff6b6b;
+--ok:#3ddc97;
+--border:#272a3f;
+--chip:#22253b;
+--input:#1b1f36;
+--shadow: 0 10px 30px rgba(0,0,0,.35);
+--radius:14px;
+  }
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+margin:0; font:16px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial;
+color:var(--text); background: radial-gradient(1000px 600px at 10% -10%, #1a1f3a 0, transparent 50%) , var(--bg);
+  }
+#app{max-width:1100px;margin:28px auto;padding:0 16px 80px;}
+header{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+header h1{font-size:24px;margin:0;font-weight:700;letter-spacing:.3px}
+header .pill{padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:var(--chip);color:var(--muted);font-size:12px}
+.bar{display:flex; gap:10px; flex-wrap:wrap; margin:14px 0 24px}
+.btn{
+appearance:none; border:1px solid var(--border); background:linear-gradient(180deg, #212544, #1a1f37);
+color:var(--text); padding:10px 14px; border-radius:12px; cursor:pointer; transition:.15s transform,.15s opacity,.15s border-color;
+box-shadow:var(--shadow); font-weight:600; letter-spacing:.2px;
+  }
+.btn:hover{transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn.primary{background:linear-gradient(180deg, #6d81ff, #6276ff); border-color:#6e7fff}
+.btn.ghost{background:var(--panel)}
+.btn.warn{background:linear-gradient(180deg, #ff7777, #ff6262); border-color:#ff7979}
+.btn.success{background:linear-gradient(180deg, #41e0a9, #33c996); border-color:#3ad1a0}
+.btn.small{padding:8px 10px; font-size:13px; border-radius:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(280px,1fr));gap:16px}
+.card{
+background:linear-gradient(180deg, #191d36, #151833); border:1px solid var(--border); border-radius:var(--radius); padding:16px; box-shadow:var(--shadow);
+  }
+.row{display:flex; gap:10px; align-items:center}
+.row.space{justify-content:space-between}
+.muted{color:var(--muted)}
+input[type="text"], textarea{
+width:100%; padding:12px 12px; background:var(--input); color:var(--text); border:1px solid var(--border); border-radius:10px; outline:none;
+  }
+textarea{min-height:70px; resize:vertical}
+.chips{display:flex; gap:8px; flex-wrap:wrap}
+.chip{background:var(--chip); border:1px solid var(--border); padding:6px 10px; border-radius:999px; font-size:12px}
+.toolbar{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px}
+.section-title{margin:18px 0 8px; font-weight:700}
+.split{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+.mono{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size:12px}
+.center{display:flex;align-items:center;justify-content:center}
+.hidden{display:none !important}
+.flipper{
+position:relative; perspective:1000px; height:240px; border-radius:14px; overflow:hidden; background:#101328; border:1px solid var(--border);
+  }
+.face{
+position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding:24px; text-align:center;
+backface-visibility:hidden; font-size:22px; font-weight:700;
+  }
+.face.back{transform:rotateY(180deg)}
+.flipwrap{position:relative; width:100%; height:100%; transition:transform .5s; transform-style:preserve-3d}
+.progress{height:8px; background:#0f1330; border:1px solid var(--border); border-radius:999px; overflow:hidden}
+.progress > div{height:100%; background:linear-gradient(90deg, var(--accent), var(--accent-2))}
+.kbd{padding:2px 6px;border:1px solid var(--border);background:#0b0e23;border-radius:6px;font-size:12px}
+.notice{padding:10px 12px; border:1px dashed var(--border); border-radius:10px; background:#101436; color:var(--muted)}
+.hr{height:1px; background:var(--border); margin:16px 0}
+.brand{font-weight:800; letter-spacing:.5px; background:linear-gradient(90deg,#98a7ff,#3ddc97); -webkit-background-clip:text; background-clip:text; color:transparent}
+.mini{font-size:12px}
+</style>
+</head>
+<body>
+<div id="app">
+<header>
+<h1><span class="brand">Quizzly</span> — local, private, sharable</h1>
+<span class="pill">no accounts • no servers • offline</span>
+</header>
+<!-- Dashboard -->
+<section id="view-dashboard">
+<div class="bar">
+<button class="btn primary" id="btn-new">➕ New quiz</button>
+<button class="btn" id="btn-import">📥 Import</button>
+<button class="btn ghost" id="btn-backup">💾 Backup all (JSON)</button>
+<button class="btn" id="btn-random-study">🎲 Random study</button>
+<span class="muted mini">Tip: press <span class="kbd">N</span> to create a new quiz</span>
+</div>
+<div id="quizzes" class="grid"></div>
+<div class="hr"></div>
+<div class="notice mono">Everything is stored in your browser’s <b>localStorage</b> under key <code>quizzly.v1.quizzes</code>. Clearing site data will remove it—use “Backup all” first.</div>
+</section>
+<!-- Editor -->
+<section id="view-editor" class="hidden">
+<div class="card">
+<div class="row space">
+<div class="row" style="gap:12px">
+<button class="btn small" id="btn-back">← Back</button>
+<span class="muted mini">Autosaves • <span id="save-status">saved</span></span>
+</div>
+<div class="toolbar">
+<button class="btn small success" id="btn-share">🔗 Share link</button>
+<button class="btn small" id="btn-export">⬇️ Export JSON</button>
+<button class="btn small warn" id="btn-delete">🗑️ Delete</button>
+</div>
+</div>
+<div class="split" style="margin-top:12px">
+<div>
+<div class="section-title">Quiz info</div>
+<input id="q-title" type="text" placeholder="Title (e.g., German Vocabulary A1)" />
+<div style="height:8px"></div>
+<textarea id="q-desc" placeholder="Description (optional)"></textarea>
+<div style="height:8px"></div>
+<input id="q-tags" type="text" placeholder="Tags (comma separated)" />
+</div>
+<div>
+<div class="section-title">Study modes</div>
+<div class="toolbar">
+<button class="btn" id="btn-study-flip">🃏 Flashcards</button>
+<button class="btn" id="btn-study-learn">📚 Learn</button>
+<button class="btn" id="btn-study-mcq">❓ Multiple choice</button>
+</div>
+<div class="hr"></div>
+<div class="section-title">Stats (this device)</div>
+<div class="row" style="gap:12px">
+<div class="chip" id="stat-count">0 cards</div>
+<div class="chip" id="stat-studied">0 studied</div>
+<div class="chip" id="stat-accuracy">0% correct</div>
+</div>
+</div>
+</div>
+</div>
+<div class="card" style="margin-top:14px">
+<div class="row space">
+<div class="section-title">Cards</div>
+<div class="toolbar">
+<button class="btn small" id="btn-add-card">➕ Add card</button>
+<button class="btn small ghost" id="btn-bulk">🧩 Bulk add</button>
+</div>
+</div>
+<div id="cards"></div>
+</div>
+</section>
+<!-- Study: Flashcards -->
+<section id="view-flip" class="hidden">
+<div class="card">
+<div class="row space">
+<button class="btn small" id="flip-back">← Exit study</button>
+<div class="row" style="gap:10px">
+<div class="chip" id="flip-counter">1 / 1</div>
+<div class="chip mini">Space = flip • ←/→ = prev/next</div>
+</div>
+</div>
+<div style="height:10px"></div>
+<div class="progress"><div id="flip-progress" style="width:0%"></div></div>
+<div style="height:12px"></div>
+<div class="flipper" id="flipper">
+<div class="flipwrap" id="flipwrap">
+<div class="face front" id="flip-front"></div>
+<div class="face back" id="flip-backface"></div>
+</div>
+</div>
+<div class="toolbar" style="margin-top:12px">
+<button class="btn" id="flip-prev">← Prev</button>
+<button class="btn" id="flip-toggle">Flip</button>
+<button class="btn" id="flip-next">Next →</button>
+</div>
+</div>
+</section>
+<!-- Study: Learn -->
+<section id="view-learn" class="hidden">
+<div class="card">
+<div class="row space">
+<button class="btn small" id="learn-back">← Exit learn</button>
+<div class="row" style="gap:10px">
+<div class="chip" id="learn-counter">Remaining: 0</div>
+<div class="chip mini">Space = flip</div>
+</div>
+</div>
+<div style="height:10px"></div>
+<div class="progress"><div id="learn-progress" style="width:0%"></div></div>
+<div style="height:12px"></div>
+<div class="flipper" id="learn-flipper">
+<div class="flipwrap" id="learn-wrap">
+<div class="face front" id="learn-front"></div>
+<div class="face back" id="learn-backface"></div>
+</div>
+</div>
+<div class="toolbar" style="margin-top:12px">
+<button class="btn" id="learn-toggle">Flip</button>
+<button class="btn success hidden" id="learn-mark-correct">✅ I was right</button>
+<button class="btn warn hidden" id="learn-mark-wrong">❌ I was wrong</button>
+</div>
+</div>
+</section>
+<!-- Study: MCQ -->
+<section id="view-mcq" class="hidden">
+<div class="card">
+<div class="row space">
+<button class="btn small" id="mcq-back">← Exit quiz</button>
+<div class="chip" id="mcq-progress-chip">0 / 0</div>
+</div>
+<div class="hr"></div>
+<div id="mcq-question" style="font-size:20px; font-weight:700; margin-bottom:10px"></div>
+<div id="mcq-options" class="grid"></div>
+<div class="row" style="gap:10px; margin-top:10px">
+<div class="chip" id="mcq-result">—</div>
+<button class="btn hidden" id="mcq-next">Next →</button>
+</div>
+</div>
+</section>
+<!-- Study: Random -->
+<section id="view-random" class="hidden">
+<div class="card">
+<div class="row space">
+<button class="btn small" id="random-back">← Exit random study</button>
+<div class="row" style="gap:10px">
+<div class="chip mini">Space = flip</div>
+</div>
+</div>
+<div style="height:10px"></div>
+<div class="progress"><div id="random-progress" style="width:0%"></div></div>
+<div style="height:12px"></div>
+<div class="flipper" id="random-flipper">
+<div class="flipwrap" id="random-wrap">
+<div class="face front" id="random-front"></div>
+<div class="face back" id="random-backface"></div>
+</div>
+</div>
+<div class="toolbar" style="margin-top:12px">
+<button class="btn" id="random-toggle">Flip</button>
+<button class="btn success hidden" id="random-mark-correct">✅ I was right</button>
+<button class="btn warn hidden" id="random-mark-wrong">❌ I was wrong</button>
+</div>
+</div>
+</section>
+<!-- Lightweight modals -->
+<dialog id="import-dialog">
+<form method="dialog" style="min-width: min(700px, 90vw); background:transparent">
+<div class="card">
+<div class="row space">
+<div class="section-title">Import quizzes</div>
+<button class="btn small" value="close">✖</button>
+</div>
+<div class="split" style="margin-top:10px">
+<div>
+<div class="muted">Paste JSON (single quiz or array)</div>
+<textarea id="import-text" class="mono" placeholder='[{ "id":"...", "title":"...", "cards":[{"q":"…","a":"…"}] }]' style="min-height:160px"></textarea>
+<div class="toolbar">
+<button class="btn" id="btn-import-parse" type="button">Import from text</button>
+</div>
+</div>
+<div>
+<div class="muted">Upload JSON file</div>
+<input id="import-file" type="file" accept="application/json" />
+<div style="height:10px"></div>
+<div class="notice mini">You can also share a URL: the recipient opens a link like <code>#import=&lt;base64&gt;</code> and Quizzly offers to add it.</div>
+</div>
+</div>
+</div>
+</form>
+</dialog>
+</div>
+<script>
+/* ========= Utilities ========= */
+const $ = sel => document.querySelector(sel);
+const $$ = sel => Array.from(document.querySelectorAll(sel));
+const uid = () => crypto.randomUUID ? crypto.randomUUID() : 'id-' + Math.random().toString(36).slice(2);
+const now = () => new Date().toISOString();
+function encodeBase64Json(obj){
+try {
+const json = JSON.stringify(obj);
+const bytes = new TextEncoder().encode(json);
+let bin = '';
+bytes.forEach(b => bin += String.fromCharCode(b));
+return btoa(bin);
+} catch(e) {
+console.error('encodeBase64Json failed:', e);
+return '';
+}
+}
+function decodeBase64Json(b64){
+try {
+const bin = atob(b64);
+const bytes = new Uint8Array([...bin].map(ch => ch.charCodeAt(0)));
+return JSON.parse(new TextDecoder().decode(bytes));
+} catch(e) {
+console.error('decodeBase64Json failed:', e);
+return null;
+}
+}
+function levenshtein(a, b){
+a = (a || '').toLowerCase().trim();
+b = (b || '').toLowerCase().trim();
+const m = a.length, n = b.length;
+const dp = Array.from({length:m+1},()=>Array(n+1).fill(0));
+for(let i=0;i<=m;i++) dp[i][0]=i;
+for(let j=0;j<=n;j++) dp[0][j]=j;
+for(let i=1;i<=m;i++){
+for(let j=1;j<=n;j++){
+const cost = a[i-1]===b[j-1]?0:1;
+dp[i][j]=Math.min(dp[i-1][j]+1, dp[i][j-1]+1, dp[i-1][j-1]+cost);
+    }
+  }
+return dp[m][n];
+}
+/* ========= Storage ========= */
+const STORE_KEY = 'quizzly.v1.quizzes';
+function loadAll(){
+try {
+let data = JSON.parse(localStorage.getItem(STORE_KEY)) || [];
+data.forEach(q => {
+if(!q.stats) q.stats = {studied:0, correct:0, wrong:0};
+q.cards = q.cards || [];
+q.cards.forEach(c => {
+if(!c.stats) c.stats = {correct:0, wrong:0};
+});
+});
+return data;
+} catch(e){
+console.warn('loadAll parse fail:', e);
+return [];
+}
+}
+function saveAll(list){
+try {
+localStorage.setItem(STORE_KEY, JSON.stringify(list));
+} catch(e) {
+console.error('saveAll failed:', e);
+}
+}
+function upsert(quiz){
+try {
+const all = loadAll();
+const idx = all.findIndex(q => q.id===quiz.id);
+if(idx>=0) all[idx]=quiz; else all.unshift(quiz);
+saveAll(all);
+} catch(e) {
+console.error('upsert failed:', e);
+}
+}
+function remove(id){
+try {
+const all = loadAll().filter(q => q.id!==id);
+saveAll(all);
+} catch(e) {
+console.error('remove failed:', e);
+}
+}
+/* ========= State ========= */
+let current = null;
+let flip = {i:0, side:0, order:[]};
+let learn = {active:[], side:0};
+let randomStudy = {active:[], side:0, allCards:[]};
+let mcq = {order:[], i:0, score:0};
+/* ========= Views ========= */
+function show(id){
+try {
+  ['#view-dashboard', '#view-editor', '#view-flip', '#view-learn', '#view-mcq', '#view-random'].forEach(v => {
+const el = $(v);
+if(el) el.classList.add('hidden');
+  });
+const target = $(id);
+if(target) target.classList.remove('hidden');
+} catch(e) {
+console.error('show failed:', e);
+}
+}
+function renderDashboard(){
+try {
+const all = loadAll();
+const wrap = $('#quizzes');
+if(!wrap) throw new Error('Quizzes container not found');
+wrap.innerHTML = '';
+if(all.length===0){
+const empty = document.createElement('div');
+empty.className = 'card';
+empty.innerHTML = `<b>No quizzes yet.</b> Click “New quiz” or import one.`;
+wrap.appendChild(empty);
+return;
+  }
+for(const q of all){
+const el = document.createElement('div');
+el.className = 'card';
+const tags = (q.tags||[]).slice(0,4).map(t=>`<span class="chip">${escapeHtml(t)}</span>`).join(' ');
+const count = (q.cards||[]).length;
+el.innerHTML = `
+      <div class="row space">
+        <div>
+          <div style="font-weight:700">${escapeHtml(q.title||'Untitled')}</div>
+          <div class="muted mini">${count} cards • updated ${new Intl.DateTimeFormat(undefined,{dateStyle:'medium', timeStyle:'short'}).format(new Date(q.updated||q.created))}</div>
+          <div class="chips" style="margin-top:8px">${tags}</div>
+        </div>
+        <div class="toolbar">
+          <button class="btn small" data-open="${q.id}">✏️ Edit</button>
+          <button class="btn small" data-study="${q.id}">🃏 Study</button>
+          <button class="btn small success" data-share="${q.id}">🔗 Share</button>
+        </div>
+      </div>
+    `;
+wrap.appendChild(el);
+  }
+wrap.removeEventListener('click', handleDashboardClick);
+wrap.addEventListener('click', handleDashboardClick);
+} catch(e) {
+console.error('renderDashboard failed:', e);
+}
+}
+function handleDashboardClick(e){
+try {
+const id = e.target.getAttribute('data-open') || e.target.closest('[data-open]')?.getAttribute('data-open');
+const studyId = e.target.getAttribute('data-study') || e.target.closest('[data-study]')?.getAttribute('data-study');
+const shareId = e.target.getAttribute('data-share') || e.target.closest('[data-share]')?.getAttribute('data-share');
+if(id) openEditor(id);
+if(studyId){ openEditor(studyId); startFlashcards(); }
+if(shareId){ const q = loadAll().find(x=>x.id===shareId); if(q) shareQuiz(q); }
+} catch(e) {
+console.error('handleDashboardClick failed:', e);
+}
+}
+function escapeHtml(s=''){
+return s.replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+}
+/* ========= Editor ========= */
+function newQuiz(){
+try {
+current = {
+id: uid(),
+title: 'Untitled quiz',
+desc: '',
+tags: [],
+cards: [],
+created: now(),
+updated: now(),
+stats: {studied:0, correct:0, wrong:0}
+  };
+upsert(current);
+openEditor(current.id);
+} catch(e) {
+console.error('newQuiz failed:', e);
+}
+}
+function openEditor(id){
+try {
+current = loadAll().find(q=>q.id===id);
+if(!current) return;
+const qTitle = $('#q-title');
+const qDesc = $('#q-desc');
+const qTags = $('#q-tags');
+const statCount = $('#stat-count');
+const statStudied = $('#stat-studied');
+const statAccuracy = $('#stat-accuracy');
+const saveStatus = $('#save-status');
+if(qTitle) qTitle.value = current.title||'';
+if(qDesc) qDesc.value = current.desc||'';
+if(qTags) qTags.value = (current.tags||[]).join(', ');
+if(statCount) statCount.textContent = `${current.cards.length} cards`;
+if(statStudied) statStudied.textContent = `${current.stats?.studied||0} studied`;
+const total = (current.stats?.correct||0)+(current.stats?.wrong||0);
+const acc = total? Math.round(100*(current.stats.correct/total)) : 0;
+if(statAccuracy) statAccuracy.textContent = `${acc}% correct`;
+renderCards();
+if(saveStatus) saveStatus.textContent = 'saved';
+show('#view-editor');
+} catch(e) {
+console.error('openEditor failed:', e);
+}
+}
+function renderCards(){
+try {
+const wrap = $('#cards');
+if(!wrap) throw new Error('Cards container not found');
+wrap.innerHTML = '';
+if(!current.cards.length){
+const hint = document.createElement('div');
+hint.className='notice';
+hint.innerHTML = `No cards yet. Add with “Add card” or “Bulk add” (format: <span class="mono">front :: back</span> per line).`;
+wrap.appendChild(hint);
+  }
+current.cards.forEach((c, idx)=>{
+const el = document.createElement('div');
+el.className='card';
+el.style.marginTop='10px';
+el.innerHTML = `
+      <div class="row space">
+        <div class="chip mini">#${idx+1}</div>
+        <div class="toolbar">
+          <button class="btn small" data-up="${idx}">↑</button>
+          <button class="btn small" data-down="${idx}">↓</button>
+          <button class="btn small warn" data-del="${idx}">🗑️</button>
+        </div>
+      </div>
+      <div class="split" style="margin-top:8px">
+        <textarea data-q="${idx}" placeholder="Front (question / term)">${escapeHtml(c.q)}</textarea>
+        <textarea data-a="${idx}" placeholder="Back (answer / definition)">${escapeHtml(c.a)}</textarea>
+      </div>
+    `;
+wrap.appendChild(el);
+  });
+wrap.oninput = debounce(e=>{
+const qIdx = e.target.getAttribute('data-q');
+const aIdx = e.target.getAttribute('data-a');
+if(qIdx!==null) current.cards[qIdx].q = e.target.value;
+if(aIdx!==null) current.cards[aIdx].a = e.target.value;
+touchSave();
+  }, 250);
+wrap.onclick = e=>{
+const del = e.target.getAttribute('data-del');
+const up = e.target.getAttribute('data-up');
+const down = e.target.getAttribute('data-down');
+if(del!==null){
+current.cards.splice(+del,1);
+touchSave(); renderCards();
+    }
+if(up!==null && +up>0){
+const i=+up; [current.cards[i-1], current.cards[i]] = [current.cards[i], current.cards[i-1]];
+touchSave(); renderCards();
+    }
+if(down!==null && +down<current.cards.length-1){
+const i=+down; [current.cards[i+1], current.cards[i]] = [current.cards[i], current.cards[i+1]];
+touchSave(); renderCards();
+    }
+  };
+} catch(e) {
+console.error('renderCards failed:', e);
+}
+}
+function addCard(q='',a=''){
+try {
+current.cards.push({q, a, stats: {correct:0, wrong:0}});
+touchSave();
+renderCards();
+} catch(e) {
+console.error('addCard failed:', e);
+}
+}
+function bulkAdd(){
+try {
+const text = prompt('Bulk add cards.\nFormat: "front :: back" per line. Lines without :: are ignored.');
+if(!text) return;
+const lines = text.split(/\r?\n/);
+let added=0;
+for(const line of lines){
+const m = line.split('::');
+if(m.length>=2){
+const front = m[0].trim();
+const back = m.slice(1).join('::').trim();
+if(front && back){ current.cards.push({q:front, a:back, stats:{correct:0, wrong:0}}); added++; }
+    }
+  }
+if(added===0) alert('No valid lines found.');
+touchSave();
+renderCards();
+} catch(e) {
+console.error('bulkAdd failed:', e);
+}
+}
+const touchSave = debounce(() => {
+try {
+if(!current) return;
+current.updated = now();
+upsert(current);
+const saveStatus = $('#save-status');
+const statCount = $('#stat-count');
+if(saveStatus) saveStatus.textContent = 'saved ' + new Date(current.updated).toLocaleTimeString();
+if(statCount) statCount.textContent = `${current.cards.length} cards`;
+} catch(e) {
+console.error('touchSave failed:', e);
+}
+}, 200);
+function debounce(fn, ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; }
+/* ========= Study: Flashcards ========= */
+function startFlashcards(){
+try {
+if(!current || !current.cards || current.cards.length===0){
+alert('No cards.');
+return;
+  }
+flip = {i:0, side:0, order:shuffle([...Array(current.cards.length).keys()])};
+updateFlipUI();
+show('#view-flip');
+} catch(e) {
+console.error('startFlashcards failed:', e);
+}
+}
+function updateFlipUI(){
+try {
+if(!current || !current.cards || !flip.order || flip.order.length===0){
+const flipCounter = $('#flip-counter');
+const flipProgress = $('#flip-progress');
+const flipFront = $('#flip-front');
+const flipBackface = $('#flip-backface');
+const flipWrap = $('#flipwrap');
+const flipPrev = $('#flip-prev');
+const flipNext = $('#flip-next');
+if(flipCounter) flipCounter.textContent = '0 / 0';
+if(flipProgress) flipProgress.style.width = '0%';
+if(flipFront) flipFront.textContent = '';
+if(flipBackface) flipBackface.textContent = '';
+if(flipWrap) flipWrap.style.transform = 'rotateY(0deg)';
+if(flipPrev) flipPrev.disabled = true;
+if(flipNext) flipNext.disabled = true;
+return;
+  }
+const n = current.cards.length;
+const cardIdx = flip.order[flip.i];
+const flipCounter = $('#flip-counter');
+const flipProgress = $('#flip-progress');
+const flipFront = $('#flip-front');
+const flipBackface = $('#flip-backface');
+const flipWrap = $('#flipwrap');
+const flipPrev = $('#flip-prev');
+const flipNext = $('#flip-next');
+if(flipCounter) flipCounter.textContent = `${flip.i+1} / ${n}`;
+if(flipProgress) flipProgress.style.width = `${Math.round((flip.i)/Math.max(1,n-1)*100)}%`;
+if(flipFront) flipFront.textContent = current.cards[cardIdx]?.q || '';
+if(flipBackface) flipBackface.textContent = current.cards[cardIdx]?.a || '';
+if(flipWrap) flipWrap.style.transform = flip.side ? 'rotateY(180deg)' : 'rotateY(0deg)';
+if(flipPrev) flipPrev.disabled = flip.i === 0;
+if(flipNext) flipNext.disabled = flip.i === n - 1;
+} catch(e) {
+console.error('updateFlipUI failed:', e);
+}
+}
+function flipNext(){
+try {
+if(!current || !current.cards || !flip.order || flip.i >= flip.order.length - 1) return;
+flip.i++;
+flip.side = 0;
+updateFlipUI();
+} catch(e) {
+console.error('flipNext failed:', e);
+}
+}
+function flipPrev(){
+try {
+if(!current || !current.cards || !flip.order || flip.i <= 0) return;
+flip.i--;
+flip.side = 0;
+updateFlipUI();
+} catch(e) {
+console.error('flipPrev failed:', e);
+}
+}
+function flipToggle(){
+try {
+flip.side = 1 - flip.side;
+updateFlipUI();
+} catch(e) {
+console.error('flipToggle failed:', e);
+}
+}
+/* ========= Study: Learn ========= */
+function startLearn(){
+try {
+if(!current || !current.cards || current.cards.length===0){
+alert('No cards.');
+return;
+  }
+learn = {active:shuffle([...Array(current.cards.length).keys()]), side:0};
+updateLearnUI();
+show('#view-learn');
+} catch(e) {
+console.error('startLearn failed:', e);
+}
+}
+function updateLearnUI(){
+try {
+if(!current || !current.cards || !learn.active){
+return;
+  }
+const total = current.cards.length;
+const remaining = learn.active.length;
+if(remaining === 0){
+alert('All cards mastered!');
+show('#view-editor');
+return;
+  }
+const cardIdx = learn.active[0];
+const learnCounter = $('#learn-counter');
+const learnProgress = $('#learn-progress');
+const learnFront = $('#learn-front');
+const learnBackface = $('#learn-backface');
+const learnWrap = $('#learn-wrap');
+const learnMarkCorrect = $('#learn-mark-correct');
+const learnMarkWrong = $('#learn-mark-wrong');
+if(learnCounter) learnCounter.textContent = `Remaining: ${remaining}`;
+if(learnProgress) learnProgress.style.width = `${Math.round((total - remaining) / total * 100)}%`;
+if(learnFront) learnFront.textContent = current.cards[cardIdx]?.q || '';
+if(learnBackface) learnBackface.textContent = current.cards[cardIdx]?.a || '';
+if(learnWrap) learnWrap.style.transform = learn.side ? 'rotateY(180deg)' : 'rotateY(0deg)';
+if(learn.side){
+learnMarkCorrect?.classList.remove('hidden');
+learnMarkWrong?.classList.remove('hidden');
+} else {
+learnMarkCorrect?.classList.add('hidden');
+learnMarkWrong?.classList.add('hidden');
+}
+} catch(e) {
+console.error('updateLearnUI failed:', e);
+}
+}
+function learnToggle(){
+try {
+learn.side = 1 - learn.side;
+updateLearnUI();
+} catch(e) {
+console.error('learnToggle failed:', e);
+}
+}
+function markLearn(flag){
+try {
+if(!current || !current.cards || !learn.active.length || learn.side === 0) return;
+const cardIdx = learn.active.shift(); // remove first
+current.cards[cardIdx].stats = current.cards[cardIdx].stats || {correct:0, wrong:0};
+current.stats = current.stats || {studied:0, correct:0, wrong:0};
+current.stats.studied++;
+if(flag){
+current.cards[cardIdx].stats.correct++;
+current.stats.correct++;
+} else {
+current.cards[cardIdx].stats.wrong++;
+current.stats.wrong++;
+learn.active.push(cardIdx); // add to end if wrong
+}
+touchSave();
+learn.side = 0;
+updateLearnUI();
+} catch(e) {
+console.error('markLearn failed:', e);
+}
+}
+/* ========= Study: Random ========= */
+function startRandomStudy(){
+try {
+const allQuizzes = loadAll();
+randomStudy.allCards = [];
+allQuizzes.forEach(q => {
+q.cards.forEach((c, i) => {
+randomStudy.allCards.push({quizId: q.id, cardIdx: i, q: c.q, a: c.a});
+});
+});
+if(randomStudy.allCards.length === 0){
+alert('No cards across all quizzes.');
+return;
+  }
+randomStudy.active = shuffle([...Array(randomStudy.allCards.length).keys()]);
+randomStudy.side = 0;
+updateRandomUI();
+show('#view-random');
+} catch(e) {
+console.error('startRandomStudy failed:', e);
+}
+}
+function updateRandomUI(){
+try {
+const total = randomStudy.allCards.length;
+const remaining = randomStudy.active.length;
+if(remaining === 0){
+alert('All cards mastered!');
+show('#view-dashboard');
+return;
+  }
+const idx = randomStudy.active[0];
+const card = randomStudy.allCards[idx];
+const randomFront = $('#random-front');
+const randomBackface = $('#random-backface');
+const randomWrap = $('#random-wrap');
+const randomProgress = $('#random-progress');
+const randomMarkCorrect = $('#random-mark-correct');
+const randomMarkWrong = $('#random-mark-wrong');
+if(randomFront) randomFront.textContent = card?.q || '';
+if(randomBackface) randomBackface.textContent = card?.a || '';
+if(randomWrap) randomWrap.style.transform = randomStudy.side ? 'rotateY(180deg)' : 'rotateY(0deg)';
+if(randomProgress) randomProgress.style.width = `${Math.round((total - remaining) / total * 100)}%`;
+if(randomStudy.side){
+randomMarkCorrect?.classList.remove('hidden');
+randomMarkWrong?.classList.remove('hidden');
+} else {
+randomMarkCorrect?.classList.add('hidden');
+randomMarkWrong?.classList.add('hidden');
+}
+} catch(e) {
+console.error('updateRandomUI failed:', e);
+}
+}
+function randomToggle(){
+try {
+randomStudy.side = 1 - randomStudy.side;
+updateRandomUI();
+} catch(e) {
+console.error('randomToggle failed:', e);
+}
+}
+function markRandom(flag){
+try {
+if(!randomStudy.active.length || randomStudy.side === 0) return;
+const idx = randomStudy.active.shift(); // remove first
+const {quizId, cardIdx} = randomStudy.allCards[idx];
+const quiz = loadAll().find(q => q.id === quizId);
+if(!quiz) return;
+quiz.cards[cardIdx].stats = quiz.cards[cardIdx].stats || {correct:0, wrong:0};
+quiz.stats = quiz.stats || {studied:0, correct:0, wrong:0};
+quiz.stats.studied++;
+if(flag){
+quiz.cards[cardIdx].stats.correct++;
+quiz.stats.correct++;
+} else {
+quiz.cards[cardIdx].stats.wrong++;
+quiz.stats.wrong++;
+randomStudy.active.push(idx); // add to end if wrong
+}
+upsert(quiz);
+randomStudy.side = 0;
+updateRandomUI();
+} catch(e) {
+console.error('markRandom failed:', e);
+}
+}
+/* ========= Study: MCQ ========= */
+function startMCQ(){
+try {
+if(!current || !current.cards || current.cards.length<2){
+alert('Need at least 2 cards.');
+return;
+  }
+mcq.order = shuffle([...Array(current.cards.length).keys()]);
+mcq.i = 0;
+mcq.score = 0;
+renderMCQ();
+show('#view-mcq');
+document.addEventListener('keydown', mcqKeyHandler);
+} catch(e) {
+console.error('startMCQ failed:', e);
+}
+}
+function renderMCQ(){
+try {
+if(!current || !current.cards || !mcq.order || mcq.i >= mcq.order.length) return;
+const idx = mcq.order[mcq.i];
+const card = current.cards[idx];
+const mcqQuestion = $('#mcq-question');
+const mcqProgressChip = $('#mcq-progress-chip');
+const mcqOptions = $('#mcq-options');
+const mcqResult = $('#mcq-result');
+const mcqNext = $('#mcq-next');
+if(mcqQuestion) mcqQuestion.textContent = card.q || '';
+if(mcqProgressChip) mcqProgressChip.textContent = `${mcq.i+1} / ${mcq.order.length}`;
+const options = new Set([card.a]);
+while(options.size<4 && options.size<current.cards.length){
+const r = current.cards[Math.floor(Math.random()*current.cards.length)]?.a;
+if(r) options.add(r);
+  }
+const opts = shuffle([...options]);
+if(mcqOptions){
+mcqOptions.innerHTML = '';
+opts.forEach((opt, optIdx)=>{
+const btn = document.createElement('button');
+btn.className='btn';
+btn.textContent = `${optIdx + 1}. ${opt}`;
+btn.style.width='100%';
+btn.onclick = ()=>{
+$$('#mcq-options .btn').forEach(b => b.disabled = true);
+const correct = (opt===card.a);
+if(correct){
+mcq.score++;
+current.stats.correct++;
+current.cards[idx].stats.correct++;
+btn.classList.add('success');
+} else {
+current.stats.wrong++;
+current.cards[idx].stats.wrong++;
+btn.classList.add('warn');
+$$('#mcq-options .btn').forEach(b => {
+if(b.textContent.slice(3) === card.a) b.classList.add('success');
+});
+}
+current.stats.studied++;
+touchSave();
+if(mcqResult) mcqResult.textContent = correct ? '✅ Correct' : `❌ Wrong (answer: ${card.a})`;
+setTimeout(mcqNext, 2000);
+      };
+mcqOptions.appendChild(btn);
+    });
+  }
+if(mcqResult) mcqResult.textContent = '—';
+if(mcqNext) mcqNext.classList.add('hidden');
+} catch(e) {
+console.error('renderMCQ failed:', e);
+}
+}
+function mcqNext(){
+try {
+if(mcq.i < mcq.order.length-1){
+mcq.i++;
+renderMCQ();
+  } else {
+alert(`Done! Score: ${mcq.score} / ${mcq.order.length}`);
+document.removeEventListener('keydown', mcqKeyHandler);
+show('#view-editor');
+  }
+} catch(e) {
+console.error('mcqNext failed:', e);
+}
+}
+function mcqKeyHandler(e){
+if(!$('#view-mcq')?.classList.contains('hidden')) return;
+const key = parseInt(e.key);
+if(key >=1 && key <=4){
+const opts = $$('#mcq-options .btn');
+if(opts[key-1] && !opts[key-1].disabled) opts[key-1].click();
+}
+}
+function shuffle(a){
+try {
+if(!a || !Array.isArray(a)) return [];
+for(let i=a.length-1;i>0;i--){
+const j=Math.floor(Math.random()*(i+1));
+[a[i],a[j]]=[a[j],a[i]];
+  }
+return a;
+} catch(e) {
+console.error('shuffle failed:', e);
+return [];
+}
+}
+/* ========= Sharing / Import ========= */
+function shareQuiz(q){
+try {
+if(!q) return;
+const payload = {
+id: q.id, title: q.title, desc: q.desc, tags: q.tags, cards: q.cards
+  };
+const b64 = encodeBase64Json(payload);
+if(!b64) throw new Error('Failed to encode quiz');
+const url = location.href.split('#')[0] + '#import=' + b64;
+navigator.clipboard?.writeText(url).then(()=>{
+alert('Share link copied to clipboard!\n\n' + url.slice(0,200) + (url.length>200?'…':''));
+  }, ()=>{
+prompt('Copy this link:', url);
+  });
+} catch(e) {
+console.error('shareQuiz failed:', e);
+}
+}
+function tryHashImportOnLoad(){
+try {
+const m = location.hash.match(/#import=([^&]+)/);
+if(!m) return;
+const obj = decodeBase64Json(decodeURIComponent(m[1]));
+if(!obj) return;
+const proceed = confirm(`Import quiz “${obj.title||'Untitled'}” from link?`);
+if(!proceed) return;
+obj.id = uid();
+obj.created = now();
+obj.updated = now();
+obj.stats = {studied:0, correct:0, wrong:0};
+upsert(obj);
+history.replaceState(null,'',location.pathname+location.search);
+alert('Imported!');
+renderDashboard();
+} catch(e) {
+console.error('tryHashImportOnLoad failed:', e);
+}
+}
+function importFromText(){
+try {
+const txt = $('#import-text')?.value.trim();
+if(!txt){ alert('Paste JSON first.'); return; }
+let parsed;
+try { parsed = JSON.parse(txt); }
+catch(e){ alert('Invalid JSON: ' + e.message); return; }
+const arr = Array.isArray(parsed) ? parsed : [parsed];
+let added=0;
+for(const q of arr){
+if(!q.cards || !Array.isArray(q.cards)){ continue; }
+const obj = {
+id: uid(),
+title: q.title||'Untitled',
+desc: q.desc||'',
+tags: q.tags||[],
+cards: q.cards.map(c=>({q:c.q||c.front||c.term||'', a:c.a||c.back||c.definition||'', stats:{correct:0, wrong:0}})).filter(c=>c.q&&c.a),
+created: now(), updated: now(), stats:{studied:0, correct:0, wrong:0}
+    };
+if(obj.cards.length){ upsert(obj); added++; }
+  }
+alert(`Imported ${added} quiz(es).`);
+$('#import-dialog')?.close();
+renderDashboard();
+} catch(e) {
+console.error('importFromText failed:', e);
+}
+}
+function backupAll(){
+try {
+const data = JSON.stringify(loadAll(), null, 2);
+const blob = new Blob([data], {type:'application/json'});
+const url = URL.createObjectURL(blob);
+const a = Object.assign(document.createElement('a'), {href:url, download:'quizzly-backup.json'});
+document.body.appendChild(a); a.click(); a.remove();
+URL.revokeObjectURL(url);
+} catch(e) {
+console.error('backupAll failed:', e);
+}
+}
+function exportCurrent(){
+try {
+if(!current) return;
+const payload = {id: current.id, title: current.title, desc: current.desc, tags: current.tags, cards: current.cards};
+const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+const url = URL.createObjectURL(blob);
+const a = Object.assign(document.createElement('a'), {href:url, download: (current.title||'quiz')+'.json'});
+document.body.appendChild(a); a.click(); a.remove();
+URL.revokeObjectURL(url);
+} catch(e) {
+console.error('exportCurrent failed:', e);
+}
+}
+/* ========= Events ========= */
+try {
+$('#btn-new').onclick = newQuiz;
+$('#btn-import').onclick = ()=>$('#import-dialog')?.showModal();
+$('#btn-backup').onclick = backupAll;
+$('#btn-random-study').onclick = startRandomStudy;
+$('#btn-back').onclick = ()=>{ renderDashboard(); show('#view-dashboard'); };
+$('#btn-add-card').onclick = ()=> addCard('','');
+$('#btn-bulk').onclick = bulkAdd;
+$('#btn-delete').onclick = ()=>{
+if(!current) return;
+const ok = confirm('Delete this quiz? This only affects your local browser.');
+if(!ok) return;
+remove(current.id); current=null; renderDashboard(); show('#view-dashboard');
+};
+$('#btn-export').onclick = exportCurrent;
+$('#btn-share').onclick = ()=>shareQuiz(current);
+$('#q-title').oninput = debounce(e=>{ if(current) current.title = e.target.value; touchSave(); }, 200);
+$('#q-desc').oninput = debounce(e=>{ if(current) current.desc = e.target.value; touchSave(); }, 200);
+$('#q-tags').oninput = debounce(e=>{ if(current) current.tags = e.target.value.split(',').map(s=>s.trim()).filter(Boolean); touchSave(); }, 200);
+$('#btn-study-flip').onclick = startFlashcards;
+$('#btn-study-learn').onclick = startLearn;
+$('#btn-study-mcq').onclick = startMCQ;
+$('#flip-back').onclick = ()=>{ show('#view-editor'); };
+$('#flip-prev').onclick = flipPrev;
+$('#flip-next').onclick = flipNext;
+$('#flip-toggle').onclick = flipToggle;
+$('#flipper').onclick = flipToggle;
+$('#learn-back').onclick = ()=>{ show('#view-editor'); };
+$('#learn-toggle').onclick = learnToggle;
+$('#learn-flipper').onclick = learnToggle;
+$('#learn-mark-correct').onclick = ()=>markLearn(true);
+$('#learn-mark-wrong').onclick = ()=>markLearn(false);
+$('#random-back').onclick = ()=>{ show('#view-dashboard'); };
+$('#random-toggle').onclick = randomToggle;
+$('#random-flipper').onclick = randomToggle;
+$('#random-mark-correct').onclick = ()=>markRandom(true);
+$('#random-mark-wrong').onclick = ()=>markRandom(false);
+document.addEventListener('keydown', e=>{
+if(!$('#view-flip')?.classList.contains('hidden')){
+if(e.code==='Space'){ e.preventDefault(); flipToggle(); }
+if(e.key==='ArrowRight') flipNext();
+if(e.key==='ArrowLeft') flipPrev();
+} else if(!$('#view-learn')?.classList.contains('hidden')){
+if(e.code==='Space'){ e.preventDefault(); learnToggle(); }
+} else if(!$('#view-random')?.classList.contains('hidden')){
+if(e.code==='Space'){ e.preventDefault(); randomToggle(); }
+}
+});
+$('#mcq-back').onclick = ()=> {
+document.removeEventListener('keydown', mcqKeyHandler);
+show('#view-editor');
+};
+$('#mcq-next').onclick = mcqNext;
+$('#btn-import-parse').onclick = importFromText;
+$('#import-file').onchange = async (e)=>{
+const file = e.target.files?.[0];
+if(!file) return;
+const text = await file.text();
+if($('#import-text')) $('#import-text').value = text;
+};
+document.addEventListener('keydown', e=>{
+if(e.key.toLowerCase()==='n' && !$('#view-dashboard')?.classList.contains('hidden')){
+newQuiz();
+  }
+});
+} catch(e) {
+console.error('Event bindings failed:', e);
+}
+/* ========= Boot ========= */
+try {
+renderDashboard();
+tryHashImportOnLoad();
+} catch(e) {
+console.error('Boot failed:', e);
+}
+</script>
+</body>
+</html>
