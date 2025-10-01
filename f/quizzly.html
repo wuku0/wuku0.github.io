@@ -844,60 +844,82 @@ console.error('startMCQ failed:', e);
 }
 }
 function renderMCQ(){
-try {
-if(!current || !current.cards || !mcq.order || mcq.i >= mcq.order.length) return;
-const idx = mcq.order[mcq.i];
-const card = current.cards[idx];
-const mcqQuestion = $('#mcq-question');
-const mcqProgressChip = $('#mcq-progress-chip');
-const mcqOptions = $('#mcq-options');
-const mcqResult = $('#mcq-result');
-const mcqNext = $('#mcq-next');
-if(mcqQuestion) mcqQuestion.textContent = card.q || '';
-if(mcqProgressChip) mcqProgressChip.textContent = `${mcq.i+1} / ${mcq.order.length}`;
-const options = new Set([card.a]);
-while(options.size<4 && options.size<current.cards.length){
-const r = current.cards[Math.floor(Math.random()*current.cards.length)]?.a;
-if(r) options.add(r);
+  try {
+    if(!current || !current.cards || !mcq.order || mcq.i >= mcq.order.length) return;
+    const idx = mcq.order[mcq.i];
+    const card = current.cards[idx];
+    const mcqQuestion = $('#mcq-question');
+    const mcqProgressChip = $('#mcq-progress-chip');
+    const mcqOptions = $('#mcq-options');
+    const mcqResult = $('#mcq-result');
+    const mcqNext = $('#mcq-next');
+
+    if(mcqQuestion) mcqQuestion.textContent = card.q || '';
+    if(mcqProgressChip) mcqProgressChip.textContent = `${mcq.i+1} / ${mcq.order.length}`;
+
+    // Build 4 options (1 correct + random distractors)
+    const options = new Set([card.a]);
+    while(options.size < 4 && options.size < current.cards.length){
+      const r = current.cards[Math.floor(Math.random()*current.cards.length)]?.a;
+      if(r) options.add(r);
+    }
+    const opts = shuffle([...options]);
+
+    if(mcqOptions){
+      mcqOptions.innerHTML = '';
+      let chosen = false; // guard to avoid double handling
+      opts.forEach((opt, optIdx)=>{
+        const btn = document.createElement('button');
+        btn.className='btn';
+        btn.textContent = `${optIdx + 1}. ${opt}`;
+        btn.style.width='100%';
+        btn.onclick = ()=>{
+          if(chosen) return; // prevent double trigger
+          chosen = true;
+
+          // Disable all buttons immediately
+          $$('#mcq-options .btn').forEach(b => b.disabled = true);
+
+          const correct = (opt === card.a);
+
+          // Update stats and visual feedback
+          if(correct){
+            mcq.score++;
+            current.stats.correct = (current.stats.correct||0) + 1;
+            current.cards[idx].stats.correct = (current.cards[idx].stats.correct||0) + 1;
+            btn.classList.add('success');
+          } else {
+            current.stats.wrong = (current.stats.wrong||0) + 1;
+            current.cards[idx].stats.wrong = (current.cards[idx].stats.wrong||0) + 1;
+            btn.classList.add('warn');
+            // Highlight the correct answer
+            $$('#mcq-options .btn').forEach(b => {
+              // b.textContent is like "1. Answer", slice after "X. "
+              if(b.textContent.slice(3) === card.a) b.classList.add('success');
+            });
+          }
+          current.stats.studied = (current.stats.studied||0) + 1;
+          touchSave();
+
+          if(mcqResult) mcqResult.textContent = correct ? '✅ Correct' : `❌ Wrong (answer: ${card.a})`;
+
+          // Keep "Next" hidden; auto-advance after 2s
+          if(mcqNext) mcqNext.classList.add('hidden');
+
+          // Auto-advance
+          setTimeout(mcqNext, 2000);
+        };
+        mcqOptions.appendChild(btn);
+      });
+    }
+
+    if(mcqResult) mcqResult.textContent = '—';
+    if(mcqNext) mcqNext.classList.add('hidden');
+  } catch(e) {
+    console.error('renderMCQ failed:', e);
   }
-const opts = shuffle([...options]);
-if(mcqOptions){
-mcqOptions.innerHTML = '';
-opts.forEach((opt, optIdx)=>{
-const btn = document.createElement('button');
-btn.className='btn';
-btn.textContent = `${optIdx + 1}. ${opt}`;
-btn.style.width='100%';
-btn.onclick = ()=>{
-$$('#mcq-options .btn').forEach(b => b.disabled = true);
-const correct = (opt===card.a);
-if(correct){
-mcq.score++;
-current.stats.correct++;
-current.cards[idx].stats.correct++;
-btn.classList.add('success');
-} else {
-current.stats.wrong++;
-current.cards[idx].stats.wrong++;
-btn.classList.add('warn');
-$$('#mcq-options .btn').forEach(b => {
-if(b.textContent.slice(3) === card.a) b.classList.add('success');
-});
 }
-current.stats.studied++;
-touchSave();
-if(mcqResult) mcqResult.textContent = correct ? '✅ Correct' : `❌ Wrong (answer: ${card.a})`;
-setTimeout(mcqNext, 2000);
-      };
-mcqOptions.appendChild(btn);
-    });
-  }
-if(mcqResult) mcqResult.textContent = '—';
-if(mcqNext) mcqNext.classList.add('hidden');
-} catch(e) {
-console.error('renderMCQ failed:', e);
-}
-}
+
 function mcqNext(){
 try {
 if(mcq.i < mcq.order.length-1){
@@ -913,13 +935,15 @@ console.error('mcqNext failed:', e);
 }
 }
 function mcqKeyHandler(e){
-if(!$('#view-mcq')?.classList.contains('hidden')) return;
-const key = parseInt(e.key);
-if(key >=1 && key <=4){
-const opts = $$('#mcq-options .btn');
-if(opts[key-1] && !opts[key-1].disabled) opts[key-1].click();
+  // Only handle keys if MCQ view is visible
+  if($('#view-mcq')?.classList.contains('hidden')) return;
+  const key = parseInt(e.key, 10);
+  if(key >= 1 && key <= 4){
+    const opts = $$('#mcq-options .btn');
+    if(opts[key-1] && !opts[key-1].disabled) opts[key-1].click();
+  }
 }
-}
+
 function shuffle(a){
 try {
 if(!a || !Array.isArray(a)) return [];
