@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gesetzle Suche</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: #fff;
+      color: #202124;
+    }
+    .logo-text {
+      font-size: 80px;
+      font-weight: 500;
+      letter-spacing: -1px;
+      margin-bottom: 20px;
+    }
+    .logo-text span:nth-child(1){color:#4285F4;}
+    .logo-text span:nth-child(2){color:#EA4335;}
+    .logo-text span:nth-child(3){color:#FBBC05;}
+    .logo-text span:nth-child(4){color:#4285F4;}
+    .logo-text span:nth-child(5){color:#34A853;}
+    .logo-text span:nth-child(6){color:#EA4335;}
+    .search-box {
+      display: flex;
+      align-items: center;
+      width: 560px;
+      max-width: 90%;
+      border: 1px solid #dfe1e5;
+      border-radius: 24px;
+      padding: 10px 15px;
+      box-shadow: none;
+      transition: box-shadow 0.2s;
+    }
+    .search-box:hover {
+      box-shadow: 0 1px 6px rgba(32,33,36,0.28);
+      border-color: rgba(223,225,229,0);
+    }
+    input[type="search"] {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-size: 16px;
+    }
+    button {
+      margin-top: 30px;
+      background: #f8f9fa;
+      border: 1px solid #f8f9fa;
+      border-radius: 4px;
+      color: #3c4043;
+      font-size: 14px;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+    button:hover {
+      border: 1px solid #dadce0;
+    }
+    .history {
+      margin-top: 30px;
+      font-size: 12px;
+      color: #9aa0a6;
+      text-align: center;
+      max-width: 90%;
+    }
+    .history a {
+      color: #9aa0a6;
+      text-decoration: none;
+      margin: 0 4px;
+      cursor: pointer;
+    }
+    .history a:hover {
+      text-decoration: underline;
+      color: #5f6368;
+    }
+  </style>
+</head>
+<body>
+  <div class="logo-text">
+    <span>G</span><span>e</span><span>s</span><span>e</span><span>t</span><span>zle</span>
+  </div>
+  <div class="search-box">
+    <input id="q" type="search" placeholder="Gesetze durchsuchen" autocomplete="off" autofocus />
+  </div>
+  <button id="searchBtn">Gesetze durchsuchen</button>
+  <div class="history" id="history"></div>
+
+  <script>
+    const qInput = document.getElementById('q');
+    const searchBtn = document.getElementById('searchBtn');
+    const historyDiv = document.getElementById('history');
+
+    const HISTORY_KEY = 'gesetze_search_history_v4';
+    let history = JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]');
+
+    function updateHistoryDisplay(){
+      historyDiv.innerHTML = '';
+      if(history.length === 0) return;
+      const shown = history.slice(0,10);
+      shown.forEach((item, index) => {
+        const link = document.createElement('a');
+        link.textContent = item;
+        link.href = '#';
+        link.addEventListener('click', e => {
+          e.preventDefault();
+          qInput.value = item;
+          doSearch();
+        });
+        historyDiv.appendChild(link);
+        if (index < shown.length - 1) {
+          historyDiv.appendChild(document.createTextNode(', '));
+        }
+      });
+    }
+
+    function saveHistory(q){
+      if(!q) return;
+      history = history.filter(x=>x!==q);
+      history.unshift(q);
+      if(history.length>30) history.pop();
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+      updateHistoryDisplay();
+    }
+
+    function doSearch(){
+      const q = qInput.value.trim();
+      if(!q) return;
+      const sites = [
+        'site:gesetze-im-internet.de',
+        'site:bundestag.github.io/gesetze',
+        'site:buzer.de'
+      ];
+      const query = sites.join(' OR ') + ' ' + q;
+      const url = 'https://www.google.com/search?q=' + encodeURIComponent(query);
+      window.open(url, '_blank');
+      saveHistory(q);
+    }
+
+    searchBtn.addEventListener('click', doSearch);
+    qInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); doSearch(); }});
+
+    updateHistoryDisplay();
+  </script>
+</body>
+</html>
