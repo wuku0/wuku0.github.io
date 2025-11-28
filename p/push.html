@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Push-up Counter (client-side)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root{
+      --bg:#0f1720; --card:#0b1220; --accent:#4ee1a1; --muted:#97a3b3;
+      color-scheme: dark;
+    }
+    html,body{height:100%; margin:0; font-family:Inter, Roboto, system-ui, Arial;}
+    body{background:linear-gradient(180deg,#071026 0%, #0f1720 100%); display:flex; align-items:center; justify-content:center; padding:18px; color:#e6eef6}
+    .app{width:100%;max-width:1100px; display:grid; grid-template-columns: 640px 1fr; gap:18px;}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:12px; padding:14px; box-shadow: 0 6px 20px rgba(2,6,23,0.6);}
+    #videoWrap{position:relative; height:360px; overflow:hidden; border-radius:10px;}
+    video#video{width:100%; height:100%; object-fit:cover; transform: scaleX(-1);} /* mirror */
+    canvas#overlay{position:absolute; left:0; top:0; width:100%; height:100%; pointer-events:none;}
+    .controls{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
+    button{background:transparent; border:1px solid rgba(255,255,255,0.08); color:var(--accent); padding:8px 10px; border-radius:8px; cursor:pointer;}
+    button.primary{background:var(--accent); color:#042025; border-color:transparent;}
+    .panel{display:flex; flex-direction:column; gap:12px;}
+    .stat{font-size:28px; font-weight:700}
+    progress{width:100%; height:18px; accent-color:var(--accent); border-radius:8px;}
+    .small{font-size:13px; color:var(--muted)}
+    label.range{display:flex; gap:8px; align-items:center;}
+    input[type=range]{width:100%;}
+    footer{font-size:12px; color:var(--muted); margin-top:6px;}
+    .bigcount{font-size:72px; font-weight:900; color:var(--accent); text-align:center;}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="card" id="left">
+      <div id="videoWrap">
+        <video id="video" autoplay playsinline></video>
+        <canvas id="overlay"></canvas>
+      </div>
+
+      <div class="controls">
+        <button id="startBtn" class="primary">Start</button>
+        <button id="pauseBtn">Pause</button>
+        <button id="calTopBtn">Calibrate top</button>
+        <button id="calBottomBtn">Calibrate bottom</button>
+        <button id="resetBtn">Reset</button>
+        <label style="margin-left:auto" class="small">Smoothing: <input id="smoothRange" type="range" min="0" max="0.95" step="0.05" value="0.6"></label>
+      </div>
+
+      <div style="display:flex; gap:12px; margin-top:10px; align-items:center;">
+        <div style="flex:1">
+          <div class="small">Rep progress</div>
+          <progress id="progress" value="0" max="1"></progress>
+        </div>
+        <div style="width:120px; text-align:center;">
+          <div class="small">Last rep</div>
+          <div id="lastTime" class="small">—</div>
+        </div>
+      </div>
+
+      <footer class="small">
+        Works fully client-side. Position camera so your whole body is visible. Mirror/camera facing mode: front camera recommended.
+      </footer>
+    </div>
+
+    <div class="card panel" id="right">
+      <div>
+        <div class="small">Reps</div>
+        <div class="bigcount" id="count">0</div>
+      </div>
+
+      <div>
+        <div class="small">Status</div>
+        <div id="status" class="stat">Idle</div>
+      </div>
+
+      <div>
+        <div class="small">Calibration</div>
+        <div class="small">Top (up position): <span id="topVal">—</span></div>
+        <div class="small">Bottom (down position): <span id="bottomVal">—</span></div>
+      </div>
+
+      <div>
+        <div class="small">Algorithm</div>
+        <div class="small">We measure the averaged vertical position of the left & right shoulders relative to the hips; calibration stores top & bottom.</div>
+      </div>
+
+      <div style="margin-top:auto;">
+        <div class="small">Options</div>
+        <label class="range small">Min down threshold: <input id="downThresh" type="range" min="0.5" max="0.98" step="0.01" value="0.88"></label>
+        <label class="range small">Min up threshold: <input id="upThresh" type="range" min="0.02" max="0.5" step="0.01" value="0.18"></label>
+      </div>
+    </div>
+  </div>
+
+<script type="module">
+  // Load TFJS and pose-detection MoveNet via CDN
+  import * as tf from "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.12.0/dist/tf.min.js";
+  import * as posedetection from "https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@0.0.7/dist/pose-detection.min.js";
+
+  const video = document.getElementById('video');
+  const overlay = document.getElementById('overlay');
+  const ctx = overlay.getContext('2d');
+  const startBtn = document.getElementById('startBtn');
+  const pauseBtn = document.getElementById('pauseBtn');
+  const calTopBtn = document.getElementById('calTopBtn');
+  const calBottomBtn = document.getElementById('calBottomBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const smoothRange = document.getElementById('smoothRange');
+  const progressEl = document.getElementById('progress');
+  const countEl = document.getElementById('count');
+  const statusEl = document.getElementById('status');
+  const topValEl = document.getElementById('topVal');
+  const bottomValEl = document.getElementById('bottomVal');
+  const downThreshEl = document.getElementById('downThresh');
+  const upThreshEl = document.getElementById('upThresh');
+  const lastTimeEl = document.getElementById('lastTime');
+
+  let detector = null;
+  let running = false;
+  let rafId = null;
+  let camStream = null;
+
+  // Rep counting state
+  let reps = 0;
+  let lastRepTimestamp = null;
+
+  // Smoothing
+  let smoothing = parseFloat(smoothRange.value);
+
+  // Calibration values: normalized shoulder Y (0 top, 1 bottom relative to video height)
+  let topPos = null;
+  let bottomPos = null;
+
+  // Internal state machine for counting
+  // 0 = waiting at top, 1 = going down, 2 = at bottom waiting to go up
+  let state = 0;
+
+  // smoothed shoulder position
+  let smoothedShoulder = null;
+
+  // For optional beep
+  const beep = (() => {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    return (f=880,d=0.06) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.01);
+      o.start();
+      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + d);
+      o.stop(ctx.currentTime + d + 0.02);
+    }
+  })();
+
+  // Utilities
+  function drawKeypoints(keypoints, scale=1){
+    ctx.lineWidth = 2;
+    // joints mapping for skeleton
+    const pairs = [
+      ['left_shoulder','right_shoulder'],
+      ['left_hip','right_hip'],
+      ['left_shoulder','left_elbow'],
+      ['left_elbow','left_wrist'],
+      ['right_shoulder','right_elbow'],
+      ['right_elbow','right_wrist'],
+      ['left_shoulder','left_hip'],
+      ['right_shoulder','right_hip'],
+    ];
+    const kp = {};
+    keypoints.forEach(k=>{ kp[k.name]=k; });
+
+    // draw skeleton
+    ctx.strokeStyle = 'rgba(78,225,161,0.85)';
+    ctx.beginPath();
+    pairs.forEach(p=>{
+      if(kp[p[0]] && kp[p[1]]){
+        ctx.moveTo(kp[p[0]].x*overlay.width, kp[p[0]].y*overlay.height);
+        ctx.lineTo(kp[p[1]].x*overlay.width, kp[p[1]].y*overlay.height);
+      }
+    });
+    ctx.stroke();
+
+    // draw keypoints
+    keypoints.forEach(k=>{
+      if(k.score>0.25){
+        ctx.fillStyle = 'rgba(78,225,161,0.95)';
+        ctx.beginPath();
+        ctx.arc(k.x*overlay.width, k.y*overlay.height, 4, 0, Math.PI*2);
+        ctx.fill();
+      }
+    });
+  }
+
+  // Normalized average shoulder Y (0..1)
+  function shoulderYNorm(keypoints){
+    const left = keypoints.find(k=>k.name==='left_shoulder');
+    const right = keypoints.find(k=>k.name==='right_shoulder');
+    const hips = keypoints.filter(k=>k.name.includes('hip'));
+    if(!left || !right || hips.length===0) return null;
+    const avgShoulder = (left.y + right.y)/2;
+    // normalize by video height is already in 0..1 (pose-detection gives normalized coords)
+    // But to account for camera tilt / distance, normalize relative to hip to shoulder span
+    const avgHip = hips.reduce((s,k)=>s+k.y,0)/hips.length;
+    // compute a normalized position between "head" and "hips": (shoulder - topOfFrame)/(hip-top)
+    // a simpler normalized measure: (avgShoulder - top) / (avgHip - top)
+    // top ~ 0.05 to avoid nose outside; we clamp.
+    const top = 0.0;
+    const denom = Math.max(0.15, avgHip - top); // avoid div by small
+    let val = (avgShoulder - top) / denom;
+    // clamp 0..1
+    val = Math.min(1, Math.max(0, val));
+    return val;
+  }
+
+  async function initCamera(){
+    // prefer user-facing camera if available
+    const constraints = {
+      audio: false,
+      video: {
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+        facingMode: 'user'
+      }
+    };
+    camStream = await navigator.mediaDevices.getUserMedia(constraints);
+    video.srcObject = camStream;
+    await video.play();
+
+    // set overlay size to actual video displayed size
+    function resize(){
+      overlay.width = video.videoWidth;
+      overlay.height = video.videoHeight;
+      overlay.style.width = video.clientWidth + 'px';
+      overlay.style.height = video.clientHeight + 'px';
+    }
+    video.addEventListener('loadeddata', resize);
+    window.addEventListener('resize', resize);
+    resize();
+  }
+
+  async function initDetector(){
+    // MoveNet SinglePose Lightning - fast and accurate for pushups
+    const model = posedetection.SupportedModels.MoveNet;
+    const detectorConfig = {
+      modelType: posedetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
+      enableSmoothing: true
+    };
+    detector = await posedetection.createDetector(model, detectorConfig);
+  }
+
+  async function processFrame(){
+    if(!running) return;
+    if(!detector) return;
+
+    let poses = null;
+    try{
+      poses = await detector.estimatePoses(video, {maxPoses:1, flipHorizontal:true});
+    }catch(e){
+      console.error('est error', e);
+      statusEl.textContent = 'Model error';
+      return;
+    }
+    ctx.clearRect(0,0,overlay.width,overlay.height);
+    if(poses && poses.length>0){
+      const pose = poses[0];
+      drawKeypoints(pose.keypoints);
+
+      // compute normalized shoulder position
+      const s = shoulderYNorm(pose.keypoints);
+      if(s !== null){
+        // smoothing exponential
+        smoothing = parseFloat(smoothRange.value);
+        if(smoothedShoulder === null) smoothedShoulder = s;
+        smoothedShoulder = smoothedShoulder * smoothing + s * (1 - smoothing);
+
+        // set progress against calibration (if calibrated)
+        if(topPos !== null && bottomPos !== null){
+          // interpolate progress: 0 at top, 1 at bottom
+          let prog = (smoothedShoulder - topPos) / (bottomPos - topPos);
+          prog = Math.min(1, Math.max(0, prog));
+          progressEl.value = prog;
+
+          // thresholds
+          const downThresh = parseFloat(downThreshEl.value); // e.g. 0.88
+          const upThresh = parseFloat(upThreshEl.value); // e.g. 0.18
+
+          // state machine
+          // from top (state 0), if prog > downThresh -> state 1 (down)
+          // when prog > downThresh and then crosses back up below upThresh -> count ++ and goto 0
+          if(state === 0){
+            statusEl.textContent = 'At top';
+            if(prog >= downThresh){
+              state = 1;
+              statusEl.textContent = 'Going down';
+            }
+          } else if(state === 1){
+            statusEl.textContent = 'Down';
+            if(prog >= 0.98){ // firmly down
+              state = 2;
+              statusEl.textContent = 'At bottom';
+            } else if(prog <= upThresh){
+              // false positive (didn't go deep enough), go back to top
+              state = 0;
+              statusEl.textContent = 'Back to top';
+            }
+          } else if(state === 2){
+            // wait for coming back up
+            if(prog <= upThresh){
+              // completed rep
+              reps += 1;
+              countEl.textContent = reps;
+              lastRepTimestamp = Date.now();
+              lastTimeEl.textContent = new Date(lastRepTimestamp).toLocaleTimeString();
+              beep();
+              // back to top waiting
+              state = 0;
+              statusEl.textContent = 'Rep counted';
+            } else {
+              statusEl.textContent = 'Hold bottom';
+            }
+          }
+        } else {
+          // not calibrated - show smoothed position
+          progressEl.value = smoothedShoulder;
+          statusEl.textContent = 'Not calibrated';
+        }
+
+        // debug display of normalized shoulder
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        ctx.font = '14px monospace';
+        ctx.fillText('shoulder norm: ' + smoothedShoulder.toFixed(3), 10, 20);
+      } else {
+        statusEl.textContent = 'No shoulders detected';
+      }
+    } else {
+      statusEl.textContent = 'No person detected';
+    }
+
+    rafId = requestAnimationFrame(processFrame);
+  }
+
+  // Buttons
+  startBtn.addEventListener('click', async ()=>{
+    if(running) return;
+    if(!detector){
+      statusEl.textContent = 'Loading model...';
+      await initDetector();
+    }
+    if(!video.srcObject){
+      try{
+        await initCamera();
+      }catch(e){
+        alert('Unable to access camera: ' + e.message);
+        return;
+      }
+    }
+    running = true;
+    statusEl.textContent = 'Running';
+    rafId = requestAnimationFrame(processFrame);
+  });
+
+  pauseBtn.addEventListener('click', ()=>{
+    if(!running) return;
+    running = false;
+    statusEl.textContent = 'Paused';
+    if(rafId) cancelAnimationFrame(rafId);
+  });
+
+  calTopBtn.addEventListener('click', ()=>{
+    if(smoothedShoulder === null) { alert('No shoulder value yet. Make sure camera sees you and press Start.'); return; }
+    topPos = smoothedShoulder;
+    topValEl.textContent = topPos.toFixed(3);
+  });
+
+  calBottomBtn.addEventListener('click', ()=>{
+    if(smoothedShoulder === null) { alert('No shoulder value yet. Make sure camera sees you and press Start.'); return; }
+    bottomPos = smoothedShoulder;
+    bottomValEl.textContent = bottomPos.toFixed(3);
+  });
+
+  resetBtn.addEventListener('click', ()=>{
+    reps = 0;
+    countEl.textContent = reps;
+    topPos = null;
+    bottomPos = null;
+    topValEl.textContent = '—';
+    bottomValEl.textContent = '—';
+    smoothedShoulder = null;
+    state = 0;
+    progressEl.value = 0;
+    lastTimeEl.textContent = '—';
+    statusEl.textContent = 'Reset';
+  });
+
+  // update smoothing live
+  smoothRange.addEventListener('input', ()=>{ smoothing = parseFloat(smoothRange.value); });
+
+  // Clean up before unload
+  window.addEventListener('beforeunload', ()=>{
+    if(camStream){
+      camStream.getTracks().forEach(t=>t.stop());
+    }
+  });
+
+  // Quick guidance: if user didn't calibrate, offer auto-calibration (try simple heuristic)
+  // We'll implement a small automatic calibration attempt when user presses Start and no calibration exists:
+  (async function warmup(){
+    // pre-initialize tf backend to avoid lag when starting
+    try{
+      await tf.setBackend('webgl');
+      // Optionally prewarm model creation but we will lazy-load in Start for speed
+    }catch(e){
+      console.warn(e);
+    }
+  })();
+
+</script>
+</body>
+</html>
